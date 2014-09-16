@@ -96,6 +96,8 @@ class PyPlink(object):
         # Reading the BIM file and setting the values
         bim = pd.read_csv(self.bim_filename, sep="\t",
                           names=original_bim_cols)
+        bim = bim.set_index("snp", drop=False)
+        bim["i"] = range(len(bim))
         bim[2] = bim.a1 * 2           # Original '0'
         bim[1] = bim.a1 + bim.a2      # Original '2'
         bim[0] = bim.a2 * 2           # Original '3'
@@ -106,7 +108,7 @@ class PyPlink(object):
         self.__allele_encoding = allele_encoding.T
 
         # Saving the data in the object
-        self.__bim = bim[original_bim_cols]
+        self.__bim = bim[["chr", "pos", "a1", "a2", "i"]]
         self.__nb_markers = len(self.__bim)
 
 
@@ -191,22 +193,41 @@ class PyPlink(object):
 
     def iter_geno_marker(self, markers):
         """Iterates over genotypes for given markers."""
-        # First, we get the indexes of the markers
-        required_markers = self.__bim[np.in1d(self.__bim.snp, markers)]
+        # If string, we change to list
+        if isinstance(markers, str):
+            markers = [markers]
 
-        # The we iterate
-        for i in required_markers.index.get_values():
+        # Getting the required markers
+        required_markers = None
+        try:
+            required_markers = self.__bim.loc[markers,:]
+        except KeyError as e:
+            for marker in markers:
+                if marker not in self.__bim.index:
+                    raise KeyError("marker not in BIM: {}".format(marker))
+
+        # Then, we iterate
+        for snp, i in required_markers.i.iteritems():
             geno = self.__geno_values[self.__bed[i]].flatten(order="C")
-            yield required_markers.loc[i].snp, geno[:self.__nb_samples]
+            yield snp, geno[:self.__nb_samples]
 
 
     def iter_acgt_geno_marker(self, markers):
         """Iterates over genotypes for given markers (ACGT format)."""
-        # First, we get the indexes of the markers
-        required_markers = self.__bim[np.in1d(self.__bim.snp, markers)]
+        # If string, we change to list
+        if isinstance(markers, str):
+            markers = [markers]
+
+        # Getting the required markers
+        required_markers = None
+        try:
+            required_markers = self.__bim.loc[markers,:]
+        except KeyError as e:
+            for marker in markers:
+                if marker not in self.__bim.index:
+                    raise KeyError("marker not in BIM: {}".format(marker))
 
         # Then, we iterate
-        for i in required_markers.index.get_values():
+        for snp, i in required_markers.i.iteritems():
             geno = self.__geno_values[self.__bed[i]].flatten(order="C")
-            yield (required_markers.loc[i].snp,
-                   self.__allele_encoding[i][geno[:self.__nb_samples]])
+            yield snp, self.__allele_encoding[i][geno[:self.__nb_samples]]
