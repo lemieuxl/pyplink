@@ -73,7 +73,7 @@ class PyPlink(object):
 
             # We want to return information about the marker and the genotypes
             geno = self.__geno_values[self.__bed[self.__n - 1]].flatten(order="C")
-            return geno[:self.__nb_samples]
+            return self.__markers[self.__n - 1], geno[:self.__nb_samples]
         else:
             raise StopIteration()
 
@@ -110,6 +110,7 @@ class PyPlink(object):
         # Saving the data in the object
         self.__bim = bim[["chr", "pos", "a1", "a2", "i"]]
         self.__nb_markers = len(self.__bim)
+        self.__markers = np.array(list(self.__bim.index))
 
 
     def get_bim(self):
@@ -181,14 +182,15 @@ class PyPlink(object):
         """Iterates over genotypes."""
         for i in range(len(self.__bed)):
             geno = self.__geno_values[self.__bed[i]].flatten(order="C")
-            yield geno[:self.__nb_samples]
+            yield self.__markers[i], geno[:self.__nb_samples]
 
 
     def iter_acgt_geno(self):
         """Iterates over genotypes (ACGT format)."""
         for i in range(len(self.__bed)):
             geno = self.__geno_values[self.__bed[i]].flatten(order="C")
-            yield self.__allele_encoding[i][geno[:self.__nb_samples]]
+            yield (self.__markers[i],
+                   self.__allele_encoding[i][geno[:self.__nb_samples]])
 
 
     def iter_geno_marker(self, markers):
