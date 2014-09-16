@@ -92,6 +92,11 @@ class PyPlink(object):
         self.nb_markers = len(self._bim)
 
 
+    def get_bim(self):
+        """Returns the BIM file."""
+        return self._bim
+
+
     def read_fam(self):
         """Reads the FAM file."""
         # The original FAM columns
@@ -109,6 +114,10 @@ class PyPlink(object):
         self.samples = ["{};{}".format(fid, iid)
                             for fid, iid in zip(self._fam.fid, self._fam.iid)]
 
+
+    def get_fam(self):
+        """Returns the FAM file."""
+        return self._fam
 
 
     def read_bed(self):
@@ -138,3 +147,8 @@ class PyPlink(object):
 
         # Saving the data in the object
         self._bed = data
+
+
+    def get_bed(self):
+        """Returns the BED file."""
+        return self._bed
