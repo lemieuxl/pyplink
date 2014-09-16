@@ -66,7 +66,10 @@ class PyPlink(object):
         """The next function."""
         if self._n < self.nb_markers:
             self._n += 1
-            return self._geno_values[self._bed[self._n - 1]].flatten(order="C")[:self.nb_samples]
+
+            # We want to return information about the marker and the genotypes
+            geno = self._geno_values[self._bed[self._n - 1]].flatten(order="C")
+            return geno[:self.nb_samples]
         else:
             raise StopIteration()
 
