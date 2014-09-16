@@ -103,7 +103,7 @@ class PyPlink(object):
 
         # Testing something
         allele_encoding = np.array([bim[0], bim[1], bim[2], bim[-1]], dtype="U2")
-        self._allele_encoding = allele_encoding.T
+        self.__allele_encoding = allele_encoding.T
 
         # Saving the data in the object
         self.__bim = bim[original_bim_cols]
@@ -183,7 +183,30 @@ class PyPlink(object):
 
 
     def iter_acgt_geno(self):
-        """Iterates over genotypes."""
+        """Iterates over genotypes (ACGT format)."""
         for i in range(len(self.__bed)):
             geno = self.__geno_values[self.__bed[i]].flatten(order="C")
-            yield self._allele_encoding[i][geno[:self.__nb_samples]]
+            yield self.__allele_encoding[i][geno[:self.__nb_samples]]
+
+
+    def iter_geno_marker(self, markers):
+        """Iterates over genotypes for given markers."""
+        # First, we get the indexes of the markers
+        required_markers = self.__bim[np.in1d(self.__bim.snp, markers)]
+
+        # The we iterate
+        for i in required_markers.index.get_values():
+            geno = self.__geno_values[self.__bed[i]].flatten(order="C")
+            yield required_markers.loc[i].snp, geno[:self.__nb_samples]
+
+
+    def iter_acgt_geno_marker(self, markers):
+        """Iterates over genotypes for given markers (ACGT format)."""
+        # First, we get the indexes of the markers
+        required_markers = self.__bim[np.in1d(self.__bim.snp, markers)]
+
+        # Then, we iterate
+        for i in required_markers.index.get_values():
+            geno = self.__geno_values[self.__bed[i]].flatten(order="C")
+            yield (required_markers.loc[i].snp,
+                   self.__allele_encoding[i][geno[:self.__nb_samples]])
