@@ -179,4 +179,11 @@ class PyPlink(object):
         """Iterates over genotypes."""
         for i in range(len(self.__bed)):
             geno = self.__geno_values[self.__bed[i]].flatten(order="C")
+            yield geno[:self.__nb_samples]
+
+
+    def iter_acgt_geno(self):
+        """Iterates over genotypes."""
+        for i in range(len(self.__bed)):
+            geno = self.__geno_values[self.__bed[i]].flatten(order="C")
             yield self._allele_encoding[i][geno[:self.__nb_samples]]
