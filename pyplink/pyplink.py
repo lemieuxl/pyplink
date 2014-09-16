@@ -48,9 +48,9 @@ class PyPlink(object):
         self.__fam = None
 
         # Reading the input files
-        self.read_bim()
-        self.read_fam()
-        self.read_bed()
+        self.__read_bim()
+        self.__read_fam()
+        self.__read_bed()
 
         # Where we're at
         self.__n = 0
@@ -88,7 +88,7 @@ class PyPlink(object):
             raise ValueError("invalid position in BED: {}".format(n))
 
 
-    def read_bim(self):
+    def __read_bim(self):
         """Reads the BIM file."""
         # The original BIM columns
         original_bim_cols = ["chr", "snp", "cm", "pos", "a1", "a2"]
@@ -120,7 +120,7 @@ class PyPlink(object):
         return self.__nb_markers
 
 
-    def read_fam(self):
+    def __read_fam(self):
         """Reads the FAM file."""
         # The original FAM columns
         self.original_fam_cols = ["fid", "iid", "father", "mother", "gender",
@@ -146,7 +146,7 @@ class PyPlink(object):
         return self.__nb_samples
 
 
-    def read_bed(self):
+    def __read_bed(self):
         """Reads the BED file."""
         # Checking if BIM and BAM files were both read
         if (self.__bim is None) or (self.__fam is None):
