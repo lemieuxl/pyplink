@@ -9,7 +9,7 @@ import os
 from setuptools import setup
 
 setup(name="pyplink",
-      version="0.1",
+      version="0.2",
       description="Python module to read binary Plink files.",
       author="Louis-Philippe Lemieux Perreault",
       author_email="louis-philippe.lemieux.perreault@statgen.org",
