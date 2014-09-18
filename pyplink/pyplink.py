@@ -18,7 +18,7 @@ class PyPlink(object):
     """Reads and store a set of binary Plink files."""
 
     # The genotypes values
-    __geno_values = np.array([[_geno_recode[(i >> j) & 3]
+    _geno_values = np.array([[_geno_recode[(i >> j) & 3]
                                            for j in range(0, 7, 2)]
                                            for i in range(256)], dtype=np.int8)
 
@@ -44,16 +44,16 @@ class PyPlink(object):
                 raise IOError("No such file: '{}'".format(filename))
 
         # Setting BIM and FAM to None
-        self.__bim = None
-        self.__fam = None
+        self._bim = None
+        self._fam = None
 
         # Reading the input files
-        self.__read_bim()
-        self.__read_fam()
-        self.__read_bed()
+        self._read_bim()
+        self._read_fam()
+        self._read_bed()
 
         # Where we're at
-        self.__n = 0
+        self._n = 0
 
 
     def __iter__(self):
@@ -68,27 +68,27 @@ class PyPlink(object):
 
     def next(self):
         """The next function."""
-        if self.__n < self.__nb_markers:
-            self.__n += 1
+        if self._n < self._nb_markers:
+            self._n += 1
 
             # We want to return information about the marker and the genotypes
-            geno = self.__geno_values[self.__bed[self.__n - 1]].flatten(order="C")
-            return self.__markers[self.__n - 1], geno[:self.__nb_samples]
+            geno = self._geno_values[self._bed[self._n - 1]].flatten(order="C")
+            return self._markers[self._n - 1], geno[:self._nb_samples]
         else:
             raise StopIteration()
 
 
     def seek(self, n):
         """Gets to a certain position in the BED file when iterating."""
-        if 0 <= n < len(self.__bed):
-            self.__n = n
+        if 0 <= n < len(self._bed):
+            self._n = n
 
         else:
             # Invalid seek value
             raise ValueError("invalid position in BED: {}".format(n))
 
 
-    def __read_bim(self):
+    def _read_bim(self):
         """Reads the BIM file."""
         # The original BIM columns
         original_bim_cols = ["chr", "snp", "cm", "pos", "a1", "a2"]
@@ -105,25 +105,25 @@ class PyPlink(object):
 
         # Testing something
         allele_encoding = np.array([bim[0], bim[1], bim[2], bim[-1]], dtype="U2")
-        self.__allele_encoding = allele_encoding.T
+        self._allele_encoding = allele_encoding.T
 
         # Saving the data in the object
-        self.__bim = bim[["chr", "pos", "a1", "a2", "i"]]
-        self.__nb_markers = len(self.__bim)
-        self.__markers = np.array(list(self.__bim.index))
+        self._bim = bim[["chr", "pos", "a1", "a2", "i"]]
+        self._nb_markers = len(self._bim)
+        self._markers = np.array(list(self._bim.index))
 
 
     def get_bim(self):
         """Returns the BIM file."""
-        return self.__bim.copy()
+        return self._bim.copy()
 
 
     def get_nb_markers(self):
         """Returns the number of markers."""
-        return self.__nb_markers
+        return self._nb_markers
 
 
-    def __read_fam(self):
+    def _read_fam(self):
         """Reads the FAM file."""
         # The original FAM columns
         self.original_fam_cols = ["fid", "iid", "father", "mother", "gender",
@@ -135,24 +135,24 @@ class PyPlink(object):
         fam["bit"] = [(i % 4) * 2 for i in range(len(fam))]
 
         # Saving the data in the object
-        self.__fam = fam
-        self.__nb_samples = len(self.__fam)
+        self._fam = fam
+        self._nb_samples = len(self._fam)
 
 
     def get_fam(self):
         """Returns the FAM file."""
-        return self.__fam.copy()
+        return self._fam.copy()
 
 
     def get_nb_samples(self):
         """Returns the number of samples."""
-        return self.__nb_samples
+        return self._nb_samples
 
 
-    def __read_bed(self):
+    def _read_bed(self):
         """Reads the BED file."""
         # Checking if BIM and BAM files were both read
-        if (self.__bim is None) or (self.__fam is None):
+        if (self._bim is None) or (self._fam is None):
             raise RuntimeError("no BIM or FAM file were read")
 
         data = None
@@ -168,29 +168,29 @@ class PyPlink(object):
                                  "{}".format(self.bed_filename))
 
             # The number of bytes per marker
-            nb_bytes = int(np.ceil(self.__nb_samples / 4.0))
+            nb_bytes = int(np.ceil(self._nb_samples / 4.0))
 
             # Reading the data
             data = np.fromfile(bed_file, dtype=np.uint8)
-            data.shape = (self.__nb_markers, nb_bytes)
+            data.shape = (self._nb_markers, nb_bytes)
 
         # Saving the data in the object
-        self.__bed = data
+        self._bed = data
 
 
     def iter_geno(self):
         """Iterates over genotypes."""
-        for i in range(len(self.__bed)):
-            geno = self.__geno_values[self.__bed[i]].flatten(order="C")
-            yield self.__markers[i], geno[:self.__nb_samples]
+        for i in range(len(self._bed)):
+            geno = self._geno_values[self._bed[i]].flatten(order="C")
+            yield self._markers[i], geno[:self._nb_samples]
 
 
     def iter_acgt_geno(self):
         """Iterates over genotypes (ACGT format)."""
-        for i in range(len(self.__bed)):
-            geno = self.__geno_values[self.__bed[i]].flatten(order="C")
-            yield (self.__markers[i],
-                   self.__allele_encoding[i][geno[:self.__nb_samples]])
+        for i in range(len(self._bed)):
+            geno = self._geno_values[self._bed[i]].flatten(order="C")
+            yield (self._markers[i],
+                   self._allele_encoding[i][geno[:self._nb_samples]])
 
 
     def iter_geno_marker(self, markers):
@@ -202,16 +202,16 @@ class PyPlink(object):
         # Getting the required markers
         required_markers = None
         try:
-            required_markers = self.__bim.loc[markers,:]
+            required_markers = self._bim.loc[markers,:]
         except KeyError as e:
             for marker in markers:
-                if marker not in self.__bim.index:
+                if marker not in self._bim.index:
                     raise KeyError("marker not in BIM: {}".format(marker))
 
         # Then, we iterate
         for snp, i in required_markers.i.iteritems():
-            geno = self.__geno_values[self.__bed[i]].flatten(order="C")
-            yield snp, geno[:self.__nb_samples]
+            geno = self._geno_values[self._bed[i]].flatten(order="C")
+            yield snp, geno[:self._nb_samples]
 
 
     def iter_acgt_geno_marker(self, markers):
@@ -223,13 +223,13 @@ class PyPlink(object):
         # Getting the required markers
         required_markers = None
         try:
-            required_markers = self.__bim.loc[markers,:]
+            required_markers = self._bim.loc[markers,:]
         except KeyError as e:
             for marker in markers:
-                if marker not in self.__bim.index:
+                if marker not in self._bim.index:
                     raise KeyError("marker not in BIM: {}".format(marker))
 
         # Then, we iterate
         for snp, i in required_markers.i.iteritems():
-            geno = self.__geno_values[self.__bed[i]].flatten(order="C")
-            yield snp, self.__allele_encoding[i][geno[:self.__nb_samples]]
+            geno = self._geno_values[self._bed[i]].flatten(order="C")
+            yield snp, self._allele_encoding[i][geno[:self._nb_samples]]
