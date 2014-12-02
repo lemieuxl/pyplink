@@ -5,11 +5,15 @@
 # python setup.py sdist --format gztar
 # python setup.py sdist --format zip
 
+
 import os
 from setuptools import setup
 
+from pyplink import __version__
+
+
 setup(name="pyplink",
-      version="0.2",
+      version=__version__,
       description="Python module to read binary Plink files.",
       author="Louis-Philippe Lemieux Perreault",
       author_email="louis-philippe.lemieux.perreault@statgen.org",
