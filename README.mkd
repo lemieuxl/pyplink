@@ -1,6 +1,6 @@
-# PyPlink - Module to read binary files from Plink
+# pyplink - Module to read binary files from Plink
 
-*Version 0.1*
+*Version 0.3*
 
 `PyPlink` is a Python module to read binary Plink files.
 
@@ -15,4 +15,126 @@ with the following modules:
 
 The tool has been tested on *Linux* only, but should work on *MacOS* and
 *Windows* operating systems as well.
+
+
+## Example
+
+This example describe how to work with the `pyplink` module.
+
+
+## Data description
+
+```python
+>>> from pyplink import PyPlink
+>>> pedfile = PyPlink("prefix")
+>>> pedfile.get_nb_samples()
+10656
+>>> pedfile.get_nb_markers()
+141701
+>>> samples = pedfile.get_fam()
+>>> samples.head()
+        fid       iid  father  mother  gender  status  byte  bit
+0  Sample_1  Sample_1       0       0       2      -9     0    0
+1  Sample_2  Sample_2       0       0       1      -9     0    2
+2  Sample_3  Sample_3       0       0       2      -9     0    4
+3  Sample_4  Sample_4       0       0       1      -9     0    6
+4  Sample_5  Sample_5       0       0       2      -9     0    0
+>>> all_markers = pedfile.get_bim()
+>>> all_markers.head()
+            chrom     pos a1 a2  i
+snp                               
+exm2268640      1  762320  A  G  0
+exm47           1  865628  A  G  1
+exm53           1  865665  A  G  2
+exm55           1  865694  A  G  3
+exm56           1  865700  A  G  4
+```
+
+## Iterating over all markers
+
+Cycling through genotypes as `-1`, `0`, `1` and `2` values, where `-1` is
+unknown, `0` is homozygous major allele, `1`is heterozygous and `2` is
+homozygous minor allele.
+
+```python
+>>> for marker_id, genotypes in pedfile:
+...     print(marker_id, genotypes)
+...     break
+... 
+exm2268640 [0 0 0 ..., 0 0 0]
+>>> for marker_id, genotypes in pedfile.iter_geno():
+...     print(marker_id, genotypes)
+...     break
+... 
+exm2268640 [0 0 0 ..., 0 0 0]
+```
+
+Cycling through genotypes as `A`, `C`, `G`, `T` values.
+
+```python
+>>> for marker_id, genotypes in pedfile.iter_acgt_geno():
+...     print(marker_id, genotypes)
+...     break
+... 
+exm2268640 ['GG' 'GG' 'GG' ..., 'GG' 'GG' 'GG']
+```
+
+## Iterating over selected markers
+
+Cycling through genotypes as `-1`, `0`, `1` and `2` values.
+
+```python
+>>> markers = ["exm47", "exm2253575", "exm269"]
+>>> for marker_id, genotypes in pedfile.iter_geno_marker(markers):
+...     print(marker_id, genotypes)
+... 
+exm47 [0 0 0 ..., 0 0 0]
+exm2253575 [1 1 1 ..., 0 0 2]
+exm269 [0 0 0 ..., 0 1 0]
+```
+
+Cycling through genotypes as `A`, `C`, `G`, `T` values.
+
+```python
+>>> for marker_id, genotypes in pedfile.iter_acgt_geno_marker(markers):
+...     print(marker_id, genotypes)
+... 
+exm47 ['GG' 'GG' 'GG' ..., 'GG' 'GG' 'GG']
+exm2253575 ['GA' 'GA' 'GA' ..., 'AA' 'AA' 'GG']
+exm269 ['GG' 'GG' 'GG' ..., 'GG' 'AG' 'GG']
+```
+
+## Misc example
+
+To get all markers on the Y chromosomes for the males.
+
+```python
+>>> y_markers = all_markers[all_markers.chrom == 23].index.values
+>>> males = samples.gender == 1
+>>> for marker_id, genotypes in pedfile.iter_geno_marker(y_markers):
+...     male_genotypes = genotypes[males.values]
+...     print("{:,d} total genotypes".format(len(genotypes)))
+...     print("{:,d} genotypes for {:,d} "
+...           "males".format(len(male_genotypes), males.sum()))
+...     break
+... 
+10,656 total genotypes
+6,297 genotypes for 6,297 males
+```
+
+To count the minor allele frequency.
+
+```python
+>>> from collections import Counter
+>>> markers = ["exm47", "exm2253575", "exm269"]
+>>> for marker_id, genotypes in pedfile.iter_geno_marker(markers):
+...     geno_counter = Counter(genotypes)
+...     nb_alleles = sum(geno_counter[i] * 2 for i in range(3))
+...     maf = (geno_counter[2] * 2 + geno_counter[1]) / nb_alleles
+...     print(marker_id, maf)
+... 
+exm47 0.0070389488503050214
+exm2253575 0.3461719116956318
+exm269 0.05987799155326138
+```
 
