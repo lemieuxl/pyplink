@@ -105,7 +105,7 @@ class PyPlink(object):
     def _read_bim(self):
         """Reads the BIM file."""
         # The original BIM columns
-        original_bim_cols = ["chr", "snp", "cm", "pos", "a1", "a2"]
+        original_bim_cols = ["chrom", "snp", "cm", "pos", "a1", "a2"]
 
         # Reading the BIM file and setting the values
         bim = pd.read_csv(self.bim_filename, sep="\t",
@@ -122,7 +122,7 @@ class PyPlink(object):
         self._allele_encoding = allele_encoding.T
 
         # Saving the data in the object
-        self._bim = bim[["chr", "pos", "a1", "a2", "i"]]
+        self._bim = bim[["chrom", "pos", "a1", "a2", "i"]]
         self._nb_markers = len(self._bim)
         self._markers = np.array(list(self._bim.index))
 
