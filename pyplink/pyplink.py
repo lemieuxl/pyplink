@@ -4,7 +4,7 @@
 #
 # The MIT License (MIT)
 #
-# Copyright (c) 2015 Beaulieu-Saucier Pharmacogenomics Centre
+# Copyright (c) 2014 Louis-Philippe Lemieux Perreault
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -33,7 +33,7 @@ import pandas as pd
 
 __author__ = "Louis-Philippe Lemieux Perreault"
 __copyright__ = "Copyright 2014 Louis-Philippe Lemieux Perreault"
-__license__ = "Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)"
+__license__ = "MIT"
 
 
 __all__ = ["PyPlink"]
