@@ -8,6 +8,14 @@
 # Commons, PO Box 1866, Mountain View, CA 94042, USA.
 
 
+from .pyplink import *
+
+try:
+    from .version import pyplink_version as __version__
+except ImportError:
+    __version__ = None
+
+
 __author__ = "Louis-Philippe Lemieux Perreault"
 __copyright__ = "Copyright 2014 Louis-Philippe Lemieux Perreault"
 __credits__ = ["Louis-Philippe Lemieux Perreault"]
@@ -16,6 +24,3 @@ __version__ = "0.3"
 __maintainer__ = "Louis-Philippe Lemieux Perreault"
 __email__ = "louis-philippe.lemieux.perreault@statgen.org"
 __status__ = "Development"
-
-
-from .pyplink import *
