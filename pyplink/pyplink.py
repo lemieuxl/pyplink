@@ -225,14 +225,15 @@ class PyPlink(object):
         if isinstance(markers, str):
             markers = [markers]
 
+        # Checking the list of required markers
+        unknown_markers = set(markers) - set(self._bim.index)
+        if len(unknown_markers) > 0:
+            raise KeyError("marker not in BIM: {}".format(
+                sorted(unknown_markers)
+            ))
+
         # Getting the required markers
-        required_markers = None
-        try:
-            required_markers = self._bim.loc[markers, :]
-        except KeyError as e:
-            for marker in markers:
-                if marker not in self._bim.index:
-                    raise KeyError("marker not in BIM: {}".format(marker))
+        required_markers = self._bim.loc[markers, :]
 
         # Then, we iterate
         for snp, i in required_markers.i.iteritems():
@@ -245,14 +246,15 @@ class PyPlink(object):
         if isinstance(markers, str):
             markers = [markers]
 
+        # Checking the list of required markers
+        unknown_markers = set(markers) - set(self._bim.index)
+        if len(unknown_markers) > 0:
+            raise KeyError("marker not in BIM: {}".format(
+                sorted(unknown_markers)
+            ))
+
         # Getting the required markers
-        required_markers = None
-        try:
-            required_markers = self._bim.loc[markers, :]
-        except KeyError as e:
-            for marker in markers:
-                if marker not in self._bim.index:
-                    raise KeyError("marker not in BIM: {}".format(marker))
+        required_markers = self._bim.loc[markers, :]
 
         # Then, we iterate
         for snp, i in required_markers.i.iteritems():
