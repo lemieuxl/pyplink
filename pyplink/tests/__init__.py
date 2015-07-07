@@ -23,9 +23,7 @@
 # THE SOFTWARE.
 
 
-import pkgutil
 import unittest
-from importlib import import_module
 
 
 __author__ = "Louis-Philippe Lemieux Perreault"
@@ -33,12 +31,4 @@ __copyright__ = "Copyright 2014 Louis-Philippe Lemieux Perreault"
 __license__ = "MIT"
 
 
-# Creating the test suite
-test_suite = unittest.TestSuite()
-
-# Finding all the modules containing tests
-for importer, module_name, ispkg in pkgutil.iter_modules(__path__):
-    if module_name.startswith("test"):
-        test_suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(
-            import_module(__name__ + "." + module_name)
-        ))
+test_suite = unittest.defaultTestLoader.discover(__name__)

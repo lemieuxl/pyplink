@@ -39,6 +39,7 @@ def setup_package():
     write_version_file()
 
     setup(
+        zip_safe=False,
         name="pyplink",
         version=VERSION,
         description="Python module to read binary Plink files.",
