@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/pgxcentre/pyplink.svg?branch=master)](https://travis-ci.org/pgxcentre/pyplink)
+[![Build Status](https://travis-ci.org/lemieuxl/pyplink.svg?branch=master)](https://travis-ci.org/lemieuxl/pyplink)
 
 
 # pyplink - Module to read binary files from Plink
