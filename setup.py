@@ -46,7 +46,7 @@ def setup_package():
         author_email="louis-philippe.lemieux.perreault@statgen.org",
         url="http://www.statgen.org",
         license="GPL",
-        packages=["pyplink"],
+        packages=["pyplink", "pyplink.tests"],
         package_data={"pyplink.tests": ["data/test_data.*"], },
         test_suite="pyplink.tests.test_suite",
         install_requires=["numpy >= 1.8.2", "pandas >= 0.14.1"],
