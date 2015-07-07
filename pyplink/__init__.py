@@ -40,3 +40,20 @@ __license__ = "MIT"
 __maintainer__ = "Louis-Philippe Lemieux Perreault"
 __email__ = "louis-philippe.lemieux.perreault@statgen.org"
 __status__ = "Development"
+
+
+def test(verbosity=1):
+    """Executes all the tests for pyplink.
+
+    Args:
+        verbosity (int): the verbosity level for unittest
+
+    Just set ``verbosity`` to an integer higher than ``1`` to have more
+    information about the tests.
+
+    """
+    import unittest
+    from .tests import test_suite
+
+    # Testing
+    unittest.TextTestRunner(verbosity=verbosity).run(test_suite)
