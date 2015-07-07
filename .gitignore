@@ -1,7 +1,12 @@
 *.swp
+*.swo
 *~
 *.pyc
 dist
 *.egg-info
 test
 pyplink/version.py
+
+.coverage
+.coveragerc
+htmlcov
