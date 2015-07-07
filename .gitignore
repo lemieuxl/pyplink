@@ -10,3 +10,5 @@ pyplink/version.py
 .coverage
 .coveragerc
 htmlcov
+
+build
