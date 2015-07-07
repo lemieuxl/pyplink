@@ -201,6 +201,11 @@ class PyPlink(object):
 
             # Reading the data
             data = np.fromfile(bed_file, dtype=np.uint8)
+
+            # Checking the data
+            if data.shape[0] != (self._nb_markers * nb_bytes):
+                raise ValueError("invalid number of entries: "
+                                 "{}".format(self.bed_filename))
             data.shape = (self._nb_markers, nb_bytes)
 
         # Saving the data in the object
