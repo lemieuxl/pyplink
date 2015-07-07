@@ -141,13 +141,13 @@ class PyPlink(object):
         self._allele_encoding = allele_encoding.T
 
         # Saving the data in the object
-        self._bim = bim[["chrom", "pos", "a1", "a2", "i"]]
+        self._bim = bim[["chrom", "pos", "cm", "a1", "a2", "i"]]
         self._nb_markers = len(self._bim)
         self._markers = np.array(list(self._bim.index))
 
     def get_bim(self):
         """Returns the BIM file."""
-        return self._bim.copy()
+        return self._bim.drop("i", axis=1)
 
     def get_nb_markers(self):
         """Returns the number of markers."""
@@ -172,7 +172,7 @@ class PyPlink(object):
 
     def get_fam(self):
         """Returns the FAM file."""
-        return self._fam.copy()
+        return self._fam.drop(["byte", "bit"], axis=1)
 
     def get_nb_samples(self):
         """Returns the number of samples."""
