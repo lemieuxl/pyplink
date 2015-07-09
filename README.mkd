@@ -3,7 +3,7 @@
 
 # pyplink - Module to read binary files from Plink
 
-*Version 0.3*
+*Version 1.0.0*
 
 `PyPlink` is a Python module to read binary Plink files.
 

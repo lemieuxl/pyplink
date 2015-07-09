@@ -1,2 +1,2 @@
-include README.markdown
+include README.mkd
 include LICENSE.txt
