@@ -42,7 +42,7 @@ __email__ = "louis-philippe.lemieux.perreault@statgen.org"
 __status__ = "Development"
 
 
-def test(verbosity=1):
+def test(verbosity=1):  # pragma: no cover
     """Executes all the tests for pyplink.
 
     Args:
