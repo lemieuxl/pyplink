@@ -512,7 +512,6 @@ class TestPyPlink(unittest.TestCase):
 
         # Getting the genotype
         o_geno = self.pedfile.get_acgt_geno_marker(marker)
-        print(o_geno)
         self.assertTrue((o_geno == e_geno).all())
 
         # Asking for an unknown marker should raise an ValueError
