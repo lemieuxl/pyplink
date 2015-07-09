@@ -90,6 +90,13 @@ class PyPlink(object):
         # Where we're at
         self._n = 0
 
+    def __repr__(self):
+        """The __repr__ function."""
+        return "PyPlink({:,d} samples; {:,d} markers)".format(
+            self.get_nb_samples(),
+            self.get_nb_markers(),
+        )
+
     def __iter__(self):
         """The __iter__ function."""
         return self
