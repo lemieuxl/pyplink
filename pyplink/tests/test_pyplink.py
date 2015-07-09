@@ -461,3 +461,25 @@ class TestPyPlink(unittest.TestCase):
             [i for i in self.pedfile.iter_acgt_geno_marker(markers)]
         self.assertEqual("\"marker not in BIM: ['unknown_3', 'unknown_4']\"",
                          str(cm.exception))
+
+    def test_repr(self):
+        """Tests the object representation of the string."""
+        # Counting the number of samples
+        nb_samples = None
+        with open(self.fam, "r") as i_file:
+            nb_samples = len(i_file.read().splitlines())
+
+        # Counting the number of markers
+        nb_markers = None
+        with open(self.bim, "r") as i_file:
+            nb_markers = len(i_file.read().splitlines())
+
+        # Creating the expected string representation
+        e_repr = "PyPlink({:,d} samples; {:,d} markers)".format(nb_samples,
+                                                                nb_markers)
+
+        # Getting the observed string representation
+        o_repr = str(self.pedfile)
+
+        # Comparing
+        self.assertEqual(e_repr, o_repr)
