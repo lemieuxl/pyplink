@@ -240,7 +240,7 @@ class PyPlink(object):
         # Checking the list of required markers
         unknown_markers = set(markers) - set(self._bim.index)
         if len(unknown_markers) > 0:
-            raise KeyError("marker not in BIM: {}".format(
+            raise ValueError("{}: marker not in BIM".format(
                 sorted(unknown_markers)
             ))
 
@@ -256,7 +256,7 @@ class PyPlink(object):
         """Gets the genotypes for a given marker."""
         # Check if the marker exists
         if marker not in set(self._bim.index):
-            raise KeyError("marker not in BIM: {}".format(marker))
+            raise ValueError("{}: marker not in BIM".format(marker))
 
         # Getting all the genotypes
         i = self._bim.loc[marker, "i"]
@@ -273,7 +273,7 @@ class PyPlink(object):
         # Checking the list of required markers
         unknown_markers = set(markers) - set(self._bim.index)
         if len(unknown_markers) > 0:
-            raise KeyError("marker not in BIM: {}".format(
+            raise ValueError("{}: marker not in BIM".format(
                 sorted(unknown_markers)
             ))
 
@@ -289,7 +289,7 @@ class PyPlink(object):
         """Gets the genotypes for a given marker (ACGT format)."""
         # Check if the marker exists
         if marker not in set(self._bim.index):
-            raise KeyError("marker not in BIM: {}".format(marker))
+            raise ValueError("{}: marker not in BIM".format(marker))
 
         # Getting all the genotypes
         i = self._bim.loc[marker, "i"]
