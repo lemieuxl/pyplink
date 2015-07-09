@@ -36,28 +36,29 @@ This example describe how to work with the `pyplink` module.
 141701
 >>> samples = pedfile.get_fam()
 >>> samples.head()
-        fid       iid  father  mother  gender  status  byte  bit
-0  Sample_1  Sample_1       0       0       2      -9     0    0
-1  Sample_2  Sample_2       0       0       1      -9     0    2
-2  Sample_3  Sample_3       0       0       2      -9     0    4
-3  Sample_4  Sample_4       0       0       1      -9     0    6
-4  Sample_5  Sample_5       0       0       2      -9     0    0
+        fid       iid  father  mother  gender  status
+0  Sample_1  Sample_1       0       0       2      -9
+1  Sample_2  Sample_2       0       0       1      -9
+2  Sample_3  Sample_3       0       0       2      -9
+3  Sample_4  Sample_4       0       0       1      -9
+4  Sample_5  Sample_5       0       0       2      -9
 >>> all_markers = pedfile.get_bim()
 >>> all_markers.head()
-            chrom     pos a1 a2  i
+            chrom     pos a1 a2
 snp                               
-exm2268640      1  762320  A  G  0
-exm47           1  865628  A  G  1
-exm53           1  865665  A  G  2
-exm55           1  865694  A  G  3
-exm56           1  865700  A  G  4
+exm2268640      1  762320  A  G
+exm47           1  865628  A  G
+exm53           1  865665  A  G
+exm55           1  865694  A  G
+exm56           1  865700  A  G
 ```
+
 
 ### Iterating over all markers
 
 Cycling through genotypes as `-1`, `0`, `1` and `2` values, where `-1` is
-unknown, `0` is homozygous major allele, `1`is heterozygous and `2` is
-homozygous minor allele.
+unknown, `0` is homozygous (major allele), `1` is heterozygous and `2` is
+homozygous (minor allele).
 
 ```python
 >>> for marker_id, genotypes in pedfile:
@@ -81,6 +82,7 @@ Cycling through genotypes as `A`, `C`, `G`, `T` values.
 ... 
 exm2268640 ['GG' 'GG' 'GG' ..., 'GG' 'GG' 'GG']
 ```
+
 
 ### Iterating over selected markers
 
@@ -106,6 +108,22 @@ exm47 ['GG' 'GG' 'GG' ..., 'GG' 'GG' 'GG']
 exm2253575 ['GA' 'GA' 'GA' ..., 'AA' 'AA' 'GG']
 exm269 ['GG' 'GG' 'GG' ..., 'GG' 'AG' 'GG']
 ```
+
+
+### Getting a single marker
+
+To get the genotypes (as `-1`, `0`, `1` and `2` values) of a single marker:
+```python
+>>> pedfile.get_geno_marker("exm47")
+[0 0 0 ..., 0 0 0]
+```
+
+To get the genotypes (as `A`, `C`, `G`, `T` values) of a single marker:
+```python
+>>> pedfile.get_acgt_geno_marker("exm47")
+['GG' 'GG' 'GG' ..., 'GG' 'GG' 'GG']
+```
+
 
 ### Misc example
 
@@ -149,9 +167,9 @@ To test the module, just perform the following command:
 ```python
 >>> import pyplink
 >>> pyplink.test()
-..............
+.................
 ----------------------------------------------------------------------
-Ran 14 tests in 0.059s
+Ran 17 tests in 0.060s
 
 OK
 ```
