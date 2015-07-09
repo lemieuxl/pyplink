@@ -483,3 +483,42 @@ class TestPyPlink(unittest.TestCase):
 
         # Comparing
         self.assertEqual(e_repr, o_repr)
+
+    def test_get_geno_marker(self):
+        """Tests the 'get_geno_marker' function."""
+        # Getting a random marker to test
+        i = random.choice(range(len(self.markers)))
+        marker = self.markers[i]
+        e_geno = self.genotypes[i]
+
+        # Getting the genotype
+        o_geno = self.pedfile.get_geno_marker(marker)
+        self.assertTrue((o_geno == e_geno).all())
+
+        # Asking for an unknown marker should raise an KeyError
+        with self.assertRaises(KeyError) as cm:
+            self.pedfile.get_geno_marker("dummy_marker")
+        self.assertEqual(
+            "'marker not in BIM: dummy_marker'",
+            str(cm.exception),
+        )
+
+    def test_get_acgt_geno_marker(self):
+        """Tests the 'get_acgt_geno_marker' function."""
+        # Getting a random marker to test
+        i = random.choice(range(len(self.markers)))
+        marker = self.markers[i]
+        e_geno = self.acgt_genotypes[i]
+
+        # Getting the genotype
+        o_geno = self.pedfile.get_acgt_geno_marker(marker)
+        print(o_geno)
+        self.assertTrue((o_geno == e_geno).all())
+
+        # Asking for an unknown marker should raise an KeyError
+        with self.assertRaises(KeyError) as cm:
+            self.pedfile.get_acgt_geno_marker("dummy_marker")
+        self.assertEqual(
+            "'marker not in BIM: dummy_marker'",
+            str(cm.exception),
+        )
