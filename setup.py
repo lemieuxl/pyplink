@@ -47,7 +47,7 @@ def setup_package():
         author="Louis-Philippe Lemieux Perreault",
         author_email="louis-philippe.lemieux.perreault@statgen.org",
         url="http://www.statgen.org",
-        license="GPL",
+        license="MIT",
         packages=["pyplink", "pyplink.tests"],
         package_data={"pyplink.tests": ["data/test_data.*"], },
         test_suite="pyplink.tests.test_suite",
