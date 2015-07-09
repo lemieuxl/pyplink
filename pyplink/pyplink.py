@@ -252,6 +252,18 @@ class PyPlink(object):
             geno = self._geno_values[self._bed[i]].flatten(order="C")
             yield snp, geno[:self._nb_samples]
 
+    def get_geno_marker(self, marker):
+        """Gets the genotypes for a given marker."""
+        # Check if the marker exists
+        if marker not in set(self._bim.index):
+            raise KeyError("marker not in BIM: {}".format(marker))
+
+        # Getting all the genotypes
+        i = self._bim.loc[marker, "i"]
+        geno = self._geno_values[self._bed[i]].flatten(order="C")
+
+        return geno[:self._nb_samples]
+
     def iter_acgt_geno_marker(self, markers):
         """Iterates over genotypes for given markers (ACGT format)."""
         # If string, we change to list
@@ -272,3 +284,15 @@ class PyPlink(object):
         for snp, i in required_markers.i.iteritems():
             geno = self._geno_values[self._bed[i]].flatten(order="C")
             yield snp, self._allele_encoding[i][geno[:self._nb_samples]]
+
+    def get_acgt_geno_marker(self, marker):
+        """Gets the genotypes for a given marker (ACGT format)."""
+        # Check if the marker exists
+        if marker not in set(self._bim.index):
+            raise KeyError("marker not in BIM: {}".format(marker))
+
+        # Getting all the genotypes
+        i = self._bim.loc[marker, "i"]
+        geno = self._geno_values[self._bed[i]].flatten(order="C")
+
+        return self._allele_encoding[i][geno[:self._nb_samples]]
