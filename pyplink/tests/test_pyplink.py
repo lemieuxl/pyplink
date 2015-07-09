@@ -424,9 +424,9 @@ class TestPyPlink(unittest.TestCase):
 
         # Adding a marker that doesn't exist
         markers.extend(["unknown_1", "unknown_2"])
-        with self.assertRaises(KeyError) as cm:
+        with self.assertRaises(ValueError) as cm:
             [i for i in self.pedfile.iter_geno_marker(markers)]
-        self.assertEqual("\"marker not in BIM: ['unknown_1', 'unknown_2']\"",
+        self.assertEqual("['unknown_1', 'unknown_2']: marker not in BIM",
                          str(cm.exception))
 
     def test_iter_acgt_geno_marker(self):
@@ -457,9 +457,9 @@ class TestPyPlink(unittest.TestCase):
 
         # Adding a marker that doesn't exist
         markers.extend(["unknown_3", "unknown_4"])
-        with self.assertRaises(KeyError) as cm:
+        with self.assertRaises(ValueError) as cm:
             [i for i in self.pedfile.iter_acgt_geno_marker(markers)]
-        self.assertEqual("\"marker not in BIM: ['unknown_3', 'unknown_4']\"",
+        self.assertEqual("['unknown_3', 'unknown_4']: marker not in BIM",
                          str(cm.exception))
 
     def test_repr(self):
@@ -495,11 +495,11 @@ class TestPyPlink(unittest.TestCase):
         o_geno = self.pedfile.get_geno_marker(marker)
         self.assertTrue((o_geno == e_geno).all())
 
-        # Asking for an unknown marker should raise an KeyError
-        with self.assertRaises(KeyError) as cm:
+        # Asking for an unknown marker should raise an ValueError
+        with self.assertRaises(ValueError) as cm:
             self.pedfile.get_geno_marker("dummy_marker")
         self.assertEqual(
-            "'marker not in BIM: dummy_marker'",
+            "dummy_marker: marker not in BIM",
             str(cm.exception),
         )
 
@@ -515,10 +515,10 @@ class TestPyPlink(unittest.TestCase):
         print(o_geno)
         self.assertTrue((o_geno == e_geno).all())
 
-        # Asking for an unknown marker should raise an KeyError
-        with self.assertRaises(KeyError) as cm:
+        # Asking for an unknown marker should raise an ValueError
+        with self.assertRaises(ValueError) as cm:
             self.pedfile.get_acgt_geno_marker("dummy_marker")
         self.assertEqual(
-            "'marker not in BIM: dummy_marker'",
+            "dummy_marker: marker not in BIM",
             str(cm.exception),
         )
