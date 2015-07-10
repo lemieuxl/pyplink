@@ -21,6 +21,48 @@ The tool has been tested on *Linux* only, but should work on *MacOS* and
 *Windows* operating systems as well.
 
 
+## Installation
+
+Using `pip`:
+
+```bash
+pip install pyplink
+```
+
+Using `conda`:
+
+```bash
+conda install pyplink -c http://statgen.org/wp-content/uploads/Softwares/pyplink
+```
+
+It is possible to add the channel to conda's configuration, so that the
+`-c http://statgen.org/...` can be omitted to update or install. Only perform
+the following command:
+
+```bash
+conda config --add channels http://statgen.org/wp-content/uploads/Softwares/pyplink
+```
+
+
+### Updating
+
+To update the module using `pip`:
+
+```bash
+pip install -U puplink
+```
+
+To update the module using `conda`:
+
+```bash
+# If the channel has been configured (see above)
+conda update pyplink
+
+# Otherwise
+conda update pyplink -c http://statgen.org/wp-content/uploads/Softwares/pyplink
+```
+
+
 ## Example
 
 This example describe how to work with the `pyplink` module.
