@@ -1,9 +1,15 @@
 #!/usr/bin/env python
 
 # How to build source distribution
-# python setup.py sdist --format bztar
-# python setup.py sdist --format gztar
-# python setup.py sdist --format zip
+#   - python setup.py sdist --format bztar
+#   - python setup.py sdist --format gztar
+#   - python setup.py sdist --format zip
+#   - python setup.py bdist_wheel --universal
+
+# How to build for conda (do both with 2.7 and 3.4)
+#   - python setup.py bdist_conda
+#   - conda convert -p all /PATH/TO/FILE -o conda_dist
+#   - cd conda_dist && conda index *
 
 
 import os

@@ -3,6 +3,7 @@
 *~
 *.pyc
 dist
+conda_dist
 *.egg-info
 test
 pyplink/version.py
