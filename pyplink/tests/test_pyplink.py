@@ -39,6 +39,8 @@ from pkg_resources import resource_filename
 import numpy as np
 import pandas as pd
 
+from six.moves import range
+
 from ..pyplink import PyPlink
 
 

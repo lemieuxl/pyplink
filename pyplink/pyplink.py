@@ -30,6 +30,8 @@ import os
 import numpy as np
 import pandas as pd
 
+from six.moves import range
+
 
 __author__ = "Louis-Philippe Lemieux Perreault"
 __copyright__ = "Copyright 2014 Louis-Philippe Lemieux Perreault"

@@ -18,7 +18,7 @@ from setuptools import setup
 
 MAJOR = 1
 MINOR = 0
-MICRO = 0
+MICRO = 1
 VERSION = "{}.{}.{}".format(MAJOR, MINOR, MICRO)
 
 
@@ -57,7 +57,8 @@ def setup_package():
         packages=["pyplink", "pyplink.tests"],
         package_data={"pyplink.tests": ["data/test_data.*"], },
         test_suite="pyplink.tests.test_suite",
-        install_requires=["numpy >= 1.8.2", "pandas >= 0.14.1"],
+        install_requires=["numpy >= 1.8.2", "pandas >= 0.14.1",
+                          "six >= 1.9.0"],
         classifiers=["Operating System :: POSIX :: Linux",
                      "Operating System :: MacOS :: MacOS X",
                      "Operating System :: Microsoft",
