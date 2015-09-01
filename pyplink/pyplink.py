@@ -135,6 +135,10 @@ class PyPlink(object):
         # Reading the BIM file and setting the values
         bim = pd.read_csv(self.bim_filename, sep="\t",
                           names=original_bim_cols)
+
+        # The 'snp' should always be strings
+        bim["snp"] = bim["snp"].astype(str)
+
         bim = bim.set_index("snp", drop=False)
         bim["i"] = range(len(bim))
         bim[2] = bim.a1 * 2           # Original '0'
@@ -170,6 +174,11 @@ class PyPlink(object):
         # Reading the FAM file and setting the values
         fam = pd.read_csv(self.fam_filename, sep=" ",
                           names=self.original_fam_cols)
+
+        # 'fid' and 'iid' should always be strings (more logical that way)
+        fam["fid"] = fam["fid"].astype(str)
+        fam["iid"] = fam["iid"].astype(str)
+
         fam["byte"] = [
             int(np.ceil((1 + 1) / 4.0)) - 1 for i in range(len(fam))
         ]
