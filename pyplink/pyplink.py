@@ -135,6 +135,10 @@ class PyPlink(object):
         # Reading the BIM file and setting the values
         bim = pd.read_csv(self.bim_filename, sep="\t",
                           names=original_bim_cols)
+
+        # The 'snp' should always be strings
+        bim["snp"] = bim["snp"].astype(str)
+
         bim = bim.set_index("snp", drop=False)
         bim["i"] = range(len(bim))
         bim[2] = bim.a1 * 2           # Original '0'
