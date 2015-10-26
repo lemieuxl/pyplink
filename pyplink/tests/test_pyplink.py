@@ -519,7 +519,16 @@ class TestPyPlink(unittest.TestCase):
         # Asking for an unknown marker should raise an ValueError
         with self.assertRaises(ValueError) as cm:
             self.pedfile.get_acgt_geno_marker("dummy_marker")
-        self.assertEqual(
-            "dummy_marker: marker not in BIM",
-            str(cm.exception),
-        )
+        self.assertEqual("dummy_marker: marker not in BIM", str(cm.exception))
+
+    def test_get_context_read_mode(self):
+        """Tests the PyPlink object as context manager."""
+        with PyPlink(self.prefix) as genotypes:
+            self.assertEqual(3, len(genotypes.get_fam().head(n=3)))
+
+    def test_invalid_mode(self):
+        """Tests invalid mode when PyPlink as context manager."""
+        with self.assertRaises(ValueError) as cm:
+            with PyPlink(self.prefix, "u") as genotypes:
+                pass
+        self.assertEqual("invalid mode: 'u'", str(cm.exception))
