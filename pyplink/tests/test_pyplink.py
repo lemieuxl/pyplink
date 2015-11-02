@@ -23,6 +23,8 @@
 # THE SOFTWARE.
 
 
+from __future__ import print_function
+
 import os
 import random
 import shutil
@@ -532,3 +534,82 @@ class TestPyPlink(unittest.TestCase):
             with PyPlink(self.prefix, "u") as genotypes:
                 pass
         self.assertEqual("invalid mode: 'u'", str(cm.exception))
+
+    def test_write_binary(self):
+        """Tests writing a Plink binary file."""
+        # The expected genotypes
+        expected_genotypes = [
+            np.array([0, 0, 0, 1, 0, 1, 2], dtype=int),
+            np.array([0, 0, 0, 0, -1, 0, 1], dtype=int),
+            np.array([0, -1, -1, 2, 0, 0, 0], dtype=int),
+        ]
+
+        # The prefix
+        test_prefix = os.path.join(self.tmp_dir, "test_write")
+
+        # Writing the binary file
+        with PyPlink(test_prefix, "w") as plink:
+            for genotypes in expected_genotypes:
+                plink.write_marker(genotypes)
+
+        # Checking the file exists
+        self.assertTrue(os.path.isfile(test_prefix + ".bed"))
+
+        # Writing the FAM file
+        with open(test_prefix + ".fam", "w") as o_file:
+            for i in range(7):
+                print("f{}".format(i+1), "s{}".format(i+1), "0", "0",
+                      random.choice((1, 2)), "-9", sep=" ", file=o_file)
+
+        # Writing the BIM file
+        with open(test_prefix + ".bim", "w") as o_file:
+            for i in range(3):
+                print(i+1, "m{}".format(i+1), "0", i+1, "T", "A", sep="\t",
+                      file=o_file)
+
+        # Reading the written binary file
+        plink = PyPlink(test_prefix)
+        for i, (marker, genotypes) in enumerate(plink):
+            self.assertEqual("m{}".format(i+1), marker)
+            self.assertTrue((expected_genotypes[i] == genotypes).all())
+
+    def test_write_binary_error(self):
+        """Tests writing a binary file, with different number of sample."""
+        # The expected genotypes
+        expected_genotypes = [
+            np.array([0, 0, 0, 1, 0, 1, 2], dtype=int),
+            np.array([0, 0, 0, 0, -1, 0], dtype=int),
+            np.array([0, -1, -1, 2, 0, 0, 0], dtype=int),
+        ]
+
+        # The prefix
+        test_prefix = os.path.join(self.tmp_dir, "test_write")
+
+        # Writing the binary file
+        with self.assertRaises(ValueError) as cm:
+            with PyPlink(test_prefix, "w") as plink:
+                for genotypes in expected_genotypes:
+                    plink.write_marker(genotypes)
+        self.assertEqual("7 samples expected, got 6", str(cm.exception))
+
+    def test_grouper_padding(self):
+        """Tests the _grouper function (when padding is required)."""
+        expected_chunks = [
+            (0, 1, 2),
+            (3, 4, 5),
+            (6, 7, 8),
+            (9, 0, 0),
+        ]
+        observed_chunks = PyPlink._grouper(range(10), 3)
+        for expected, observed in zip(expected_chunks, observed_chunks):
+            self.assertEqual(expected, observed)
+
+    def test_grouper_no_padding(self):
+        """Tests the _grouper function (when padding is not required)."""
+        expected_chunks = [
+            (0, 1, 2, 3, 4),
+            (5, 6, 7, 8, 9),
+        ]
+        observed_chunks = PyPlink._grouper(range(10), 5)
+        for expected, observed in zip(expected_chunks, observed_chunks):
+            self.assertEqual(expected, observed)
