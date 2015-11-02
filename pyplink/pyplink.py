@@ -163,19 +163,16 @@ class PyPlink(object):
 
     def _read_bim(self):
         """Reads the BIM file."""
-        # The original BIM columns
-        original_bim_cols = ["chrom", "snp", "cm", "pos", "a1", "a2"]
-
         # Reading the BIM file and setting the values
         bim = pd.read_csv(self.bim_filename, delim_whitespace=True,
-                          names=original_bim_cols)
+                          names=["chrom", "snp", "cm", "pos", "a1", "a2"])
 
         # The 'snp', 'a1' and 'a2' columns should always be strings
         bim["snp"] = bim["snp"].astype(str)
         bim["a1"] = bim["a1"].astype(str)
         bim["a2"] = bim["a2"].astype(str)
 
-        bim = bim.set_index("snp", drop=False)
+        bim = bim.set_index("snp")
         bim["i"] = range(len(bim))
         bim[2] = bim.a1 * 2           # Original '0'
         bim[1] = bim.a1 + bim.a2      # Original '2'
@@ -204,16 +201,16 @@ class PyPlink(object):
 
     def _read_fam(self):
         """Reads the FAM file."""
-        # The original FAM columns
-        self.original_fam_cols = ["fid", "iid", "father", "mother", "gender",
-                                  "status"]
         # Reading the FAM file and setting the values
         fam = pd.read_csv(self.fam_filename, delim_whitespace=True,
-                          names=self.original_fam_cols)
+                          names=["fid", "iid", "father", "mother", "gender",
+                                 "status"])
 
-        # 'fid' and 'iid' should always be strings (more logical that way)
+        # The sample IDs should always be strings (more logical that way)
         fam["fid"] = fam["fid"].astype(str)
         fam["iid"] = fam["iid"].astype(str)
+        fam["father"] = fam["father"].astype(str)
+        fam["mother"] = fam["mother"].astype(str)
 
         fam["byte"] = [
             int(np.ceil((1 + 1) / 4.0)) - 1 for i in range(len(fam))
