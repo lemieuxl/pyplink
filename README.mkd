@@ -2,9 +2,9 @@
 [![PyPI version](https://badge.fury.io/py/pyplink.svg)](http://badge.fury.io/py/pyplink)
 
 
-# pyplink - Module to read binary files from Plink
+# pyplink - Module to process Plink's binary files
 
-`PyPlink` is a Python module to read binary Plink files.
+`PyPlink` is a Python module to read and write Plink's binary files.
 
 
 ## Dependencies
@@ -13,7 +13,8 @@ The tool requires a standard [Python](http://python.org/) installation (2.7 or
 3.4) with the following modules:
 
 1. [numpy](http://www.numpy.org/) version 1.8.2 or latest
-1. [pandas](http://pandas.pydata.org/) version 0.14.1 or latest
+2. [pandas](http://pandas.pydata.org/) version 0.14.1 or latest
+3. [six](https://pythonhosted.org/six/) version 1.9.0 or latest
 
 The tool has been tested on *Linux* only, but should work on *MacOS* and
 *Windows* operating systems as well.
@@ -34,8 +35,8 @@ conda install pyplink -c http://statgen.org/wp-content/uploads/Softwares/pyplink
 ```
 
 It is possible to add the channel to conda's configuration, so that the
-`-c http://statgen.org/...` can be omitted to update or install. Only perform
-the following command:
+`-c http://statgen.org/...` can be omitted to update or install the package.
+To add the channel, perform the following command:
 
 ```bash
 conda config --add channels http://statgen.org/wp-content/uploads/Softwares/pyplink
@@ -61,146 +62,6 @@ conda update pyplink -c http://statgen.org/wp-content/uploads/Softwares/pyplink
 ```
 
 
-## Example
-
-This example describe how to work with the `pyplink` module.
-
-
-### Data description
-
-```python
->>> from pyplink import PyPlink
->>> pedfile = PyPlink("prefix")
->>> pedfile.get_nb_samples()
-10656
->>> pedfile.get_nb_markers()
-141701
->>> samples = pedfile.get_fam()
->>> samples.head()
-        fid       iid  father  mother  gender  status
-0  Sample_1  Sample_1       0       0       2      -9
-1  Sample_2  Sample_2       0       0       1      -9
-2  Sample_3  Sample_3       0       0       2      -9
-3  Sample_4  Sample_4       0       0       1      -9
-4  Sample_5  Sample_5       0       0       2      -9
->>> all_markers = pedfile.get_bim()
->>> all_markers.head()
-            chrom     pos a1 a2
-snp                               
-exm2268640      1  762320  A  G
-exm47           1  865628  A  G
-exm53           1  865665  A  G
-exm55           1  865694  A  G
-exm56           1  865700  A  G
-```
-
-
-### Iterating over all markers
-
-Cycling through genotypes as `-1`, `0`, `1` and `2` values, where `-1` is
-unknown, `0` is homozygous (major allele), `1` is heterozygous and `2` is
-homozygous (minor allele).
-
-```python
->>> for marker_id, genotypes in pedfile:
-...     print(marker_id, genotypes)
-...     break
-... 
-exm2268640 [0 0 0 ..., 0 0 0]
->>> for marker_id, genotypes in pedfile.iter_geno():
-...     print(marker_id, genotypes)
-...     break
-... 
-exm2268640 [0 0 0 ..., 0 0 0]
-```
-
-Cycling through genotypes as `A`, `C`, `G`, `T` values.
-
-```python
->>> for marker_id, genotypes in pedfile.iter_acgt_geno():
-...     print(marker_id, genotypes)
-...     break
-... 
-exm2268640 ['GG' 'GG' 'GG' ..., 'GG' 'GG' 'GG']
-```
-
-
-### Iterating over selected markers
-
-Cycling through genotypes as `-1`, `0`, `1` and `2` values.
-
-```python
->>> markers = ["exm47", "exm2253575", "exm269"]
->>> for marker_id, genotypes in pedfile.iter_geno_marker(markers):
-...     print(marker_id, genotypes)
-... 
-exm47 [0 0 0 ..., 0 0 0]
-exm2253575 [1 1 1 ..., 0 0 2]
-exm269 [0 0 0 ..., 0 1 0]
-```
-
-Cycling through genotypes as `A`, `C`, `G`, `T` values.
-
-```python
->>> for marker_id, genotypes in pedfile.iter_acgt_geno_marker(markers):
-...     print(marker_id, genotypes)
-... 
-exm47 ['GG' 'GG' 'GG' ..., 'GG' 'GG' 'GG']
-exm2253575 ['GA' 'GA' 'GA' ..., 'AA' 'AA' 'GG']
-exm269 ['GG' 'GG' 'GG' ..., 'GG' 'AG' 'GG']
-```
-
-
-### Getting a single marker
-
-To get the genotypes (as `-1`, `0`, `1` and `2` values) of a single marker:
-```python
->>> pedfile.get_geno_marker("exm47")
-[0 0 0 ..., 0 0 0]
-```
-
-To get the genotypes (as `A`, `C`, `G`, `T` values) of a single marker:
-```python
->>> pedfile.get_acgt_geno_marker("exm47")
-['GG' 'GG' 'GG' ..., 'GG' 'GG' 'GG']
-```
-
-
-### Misc example
-
-To get all markers on the Y chromosomes for the males.
-
-```python
->>> y_markers = all_markers[all_markers.chrom == 23].index.values
->>> males = samples.gender == 1
->>> for marker_id, genotypes in pedfile.iter_geno_marker(y_markers):
-...     male_genotypes = genotypes[males.values]
-...     print("{:,d} total genotypes".format(len(genotypes)))
-...     print("{:,d} genotypes for {:,d} "
-...           "males".format(len(male_genotypes), males.sum()))
-...     break
-... 
-10,656 total genotypes
-6,297 genotypes for 6,297 males
-```
-
-To count the minor allele frequency.
-
-```python
->>> from collections import Counter
->>> markers = ["exm47", "exm2253575", "exm269"]
->>> for marker_id, genotypes in pedfile.iter_geno_marker(markers):
-...     geno_counter = Counter(genotypes)
-...     nb_alleles = sum(geno_counter[i] * 2 for i in range(3))
-...     maf = (geno_counter[2] * 2 + geno_counter[1]) / nb_alleles
-...     print(marker_id, maf)
-... 
-exm47 0.0070389488503050214
-exm2253575 0.3461719116956318
-exm269 0.05987799155326138
-```
-
-
 ## Testing
 
 To test the module, just perform the following command:
@@ -208,9 +69,16 @@ To test the module, just perform the following command:
 ```python
 >>> import pyplink
 >>> pyplink.test()
-.................
+.......................
 ----------------------------------------------------------------------
-Ran 17 tests in 0.060s
+Ran 23 tests in 0.149s
 
 OK
 ```
+
+
+## Example
+
+The following
+[notebook](http://nbviewer.ipython.org/github/lemieuxl/pyplink/blob/binary_write/demo/PyPlink%20Demo.ipynb)
+contains a demonstration (for both Python 2 and 3) of the `PyPlink` module.
