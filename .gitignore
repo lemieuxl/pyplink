@@ -12,4 +12,6 @@ pyplink/version.py
 .coveragerc
 htmlcov
 
+.ipynb_checkpoints
+
 build

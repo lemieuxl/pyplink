@@ -7,9 +7,7 @@
 #   - python setup.py bdist_wheel --universal
 
 # How to build for conda (do both with 2.7 and 3.4)
-#   - python setup.py bdist_conda
-#   - conda convert -p all /PATH/TO/FILE -o conda_dist
-#   - cd conda_dist && conda index *
+#   - bash conda_build.sh
 
 
 import os
@@ -17,8 +15,8 @@ from setuptools import setup
 
 
 MAJOR = 1
-MINOR = 0
-MICRO = 2
+MINOR = 1
+MICRO = 0
 VERSION = "{}.{}.{}".format(MAJOR, MINOR, MICRO)
 
 

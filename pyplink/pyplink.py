@@ -27,6 +27,11 @@
 
 import os
 
+try:
+    from itertools import zip_longest as zip_longest
+except ImportError:
+    from itertools import izip_longest as zip_longest
+
 import numpy as np
 import pandas as pd
 
@@ -43,9 +48,10 @@ __all__ = ["PyPlink"]
 
 # The recoding values
 _geno_recode = {1: -1,  # Unknown genotype
-                2: 1,   # Heterozygous genotype
-                0: 2,   # Homozygous A1
-                3: 0}   # Homozygous A2
+                2:  1,  # Heterozygous genotype
+                0:  2,  # Homozygous A1
+                3:  0}  # Homozygous A2
+_byte_recode = dict(value[::-1] for value in _geno_recode.items())
 
 
 class PyPlink(object):
@@ -60,40 +66,58 @@ class PyPlink(object):
         dtype=np.int8,
     )
 
-    def __init__(self, i_prefix):
+    def __init__(self, i_prefix, mode="r"):
         """Initializes a new PyPlink object.
 
-        :param i_prefix: the prefix of the binary Plink files
-        :type i_prefix: str
+        Args:
+            i_prefix (str): the prefix of the binary Plink files
+            mode (str): the open mode for the binary Plink file
+            nb_samples (int): the number of samples
 
-        Reads binary Plink files (BED, BIM and FAM) and create the objects.
+        Reads or write binary Plink files (BED, BIM and FAM).
 
         """
-        # These are the name of the input files
+        # The mode
+        self._mode = mode
+
+        # These are the name of the files
         self.bed_filename = "{}.bed".format(i_prefix)
         self.bim_filename = "{}.bim".format(i_prefix)
         self.fam_filename = "{}.fam".format(i_prefix)
 
-        # Checking that all the files exists (otherwise, there's nothing to do)
-        for filename in (self.bed_filename, self.bim_filename,
-                         self.fam_filename):
-            if not os.path.isfile(filename):
-                raise IOError("No such file: '{}'".format(filename))
+        if self._mode == "r":
+            # Checking that all the files exists (otherwise, there's nothing to
+            # do)
+            for filename in (self.bed_filename, self.bim_filename,
+                             self.fam_filename):
+                if not os.path.isfile(filename):
+                    raise IOError("No such file: '{}'".format(filename))
 
-        # Setting BIM and FAM to None
-        self._bim = None
-        self._fam = None
+            # Setting BIM and FAM to None
+            self._bim = None
+            self._fam = None
 
-        # Reading the input files
-        self._read_bim()
-        self._read_fam()
-        self._read_bed()
+            # Reading the input files
+            self._read_bim()
+            self._read_fam()
+            self._read_bed()
 
-        # Where we're at
-        self._n = 0
+            # Where we're at
+            self._n = 0
+
+        elif self._mode == "w":
+            # The dummy number of samples and bytes
+            self._nb_samples = None
+
+            # Opening the output BED file
+            self._bed_file = open(self.bed_filename, "wb")
+            self._write_bed_header()
+
+        else:
+            raise ValueError("invalid mode: '{}'".format(self._mode))
 
     def __repr__(self):
-        """The __repr__ function."""
+        """The representation of the PyPlink object."""
         return "PyPlink({:,d} samples; {:,d} markers)".format(
             self.get_nb_samples(),
             self.get_nb_markers(),
@@ -106,6 +130,16 @@ class PyPlink(object):
     def __next__(self):
         """The __next__ function."""
         return self.next()
+
+    def __enter__(self):
+        """Entering the context manager."""
+        return self
+
+    def __exit__(self, *args):
+        """Exiting the context manager."""
+        if self._mode == "w":
+            # Closing the BED file
+            self._bed_file.close()
 
     def next(self):
         """The next function."""
@@ -129,17 +163,16 @@ class PyPlink(object):
 
     def _read_bim(self):
         """Reads the BIM file."""
-        # The original BIM columns
-        original_bim_cols = ["chrom", "snp", "cm", "pos", "a1", "a2"]
-
         # Reading the BIM file and setting the values
-        bim = pd.read_csv(self.bim_filename, sep="\t",
-                          names=original_bim_cols)
+        bim = pd.read_csv(self.bim_filename, delim_whitespace=True,
+                          names=["chrom", "snp", "cm", "pos", "a1", "a2"])
 
-        # The 'snp' should always be strings
+        # The 'snp', 'a1' and 'a2' columns should always be strings
         bim["snp"] = bim["snp"].astype(str)
+        bim["a1"] = bim["a1"].astype(str)
+        bim["a2"] = bim["a2"].astype(str)
 
-        bim = bim.set_index("snp", drop=False)
+        bim = bim.set_index("snp")
         bim["i"] = range(len(bim))
         bim[2] = bim.a1 * 2           # Original '0'
         bim[1] = bim.a1 + bim.a2      # Original '2'
@@ -168,16 +201,16 @@ class PyPlink(object):
 
     def _read_fam(self):
         """Reads the FAM file."""
-        # The original FAM columns
-        self.original_fam_cols = ["fid", "iid", "father", "mother", "gender",
-                                  "status"]
         # Reading the FAM file and setting the values
-        fam = pd.read_csv(self.fam_filename, sep=" ",
-                          names=self.original_fam_cols)
+        fam = pd.read_csv(self.fam_filename, delim_whitespace=True,
+                          names=["fid", "iid", "father", "mother", "gender",
+                                 "status"])
 
-        # 'fid' and 'iid' should always be strings (more logical that way)
+        # The sample IDs should always be strings (more logical that way)
         fam["fid"] = fam["fid"].astype(str)
         fam["iid"] = fam["iid"].astype(str)
+        fam["father"] = fam["father"].astype(str)
+        fam["mother"] = fam["mother"].astype(str)
 
         fam["byte"] = [
             int(np.ceil((1 + 1) / 4.0)) - 1 for i in range(len(fam))
@@ -228,6 +261,11 @@ class PyPlink(object):
 
         # Saving the data in the object
         self._bed = data
+
+    def _write_bed_header(self):
+        """Writes the BED first 3 bytes."""
+        # Writing the first three bytes
+        self._bed_file.write(bytearray((108, 27, 1)))
 
     def iter_geno(self):
         """Iterates over genotypes."""
@@ -307,3 +345,29 @@ class PyPlink(object):
         geno = self._geno_values[self._bed[i]].flatten(order="C")
 
         return self._allele_encoding[i][geno[:self._nb_samples]]
+
+    def write_marker(self, genotypes):
+        """Write genotypes to binary file."""
+        # Initializing the number of samples if required
+        if self._nb_samples is None:
+            self._nb_samples = len(genotypes)
+
+        # Checking the expected number of samples
+        if self._nb_samples != len(genotypes):
+            raise ValueError("{:,d} samples expected, got {:,d}".format(
+                self._nb_samples,
+                len(genotypes),
+            ))
+
+        # Writing to file
+        byte_array = [
+            g[0] | (g[1] << 2) | (g[2] << 4) | (g[3] << 6) for g in
+            self._grouper((_byte_recode[geno] for geno in genotypes), 4)
+        ]
+        self._bed_file.write(bytearray(byte_array))
+
+    @staticmethod
+    def _grouper(iterable, n, fillvalue=0):
+        """Collect data into fixed-length chunks or blocks."""
+        args = [iter(iterable)] * n
+        return zip_longest(fillvalue=fillvalue, *args)
