@@ -16,7 +16,7 @@ for python_version in $python_versions
 do
     # Building
     conda build --python $python_version pyplink &> log.txt
-    filename=$(egrep "^# [$] binstar upload \S+$" log.txt | cut -d " " -f 5)
+    filename=$(egrep "^# [$] anaconda upload \S+$" log.txt | cut -d " " -f 5)
 
     # Converting
     for platform in $platforms
