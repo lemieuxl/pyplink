@@ -80,5 +80,5 @@ OK
 ## Example
 
 The following
-[notebook](http://nbviewer.ipython.org/github/lemieuxl/pyplink/blob/binary_write/demo/PyPlink%20Demo.ipynb)
+[notebook](http://nbviewer.ipython.org/github/lemieuxl/pyplink/blob/master/demo/PyPlink%20Demo.ipynb)
 contains a demonstration (for both Python 2 and 3) of the `PyPlink` module.
