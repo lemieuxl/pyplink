@@ -33,6 +33,7 @@ import zipfile
 import platform
 import unittest
 from tempfile import mkdtemp
+from distutils.spawn import find_executable
 from subprocess import check_call, PIPE, CalledProcessError
 
 try:
@@ -627,49 +628,55 @@ class TestPyPlink(unittest.TestCase):
                      "Plink not available for {}".format(platform.system()))
     def test_with_plink(self):
         """Tests to read a binary file using Plink."""
-        # The url for each platform
-        url = "http://pngu.mgh.harvard.edu/~purcell/plink/dist/{filename}"
-
-        # Getting the name of the file
-        filename = ""
+        # Checking if Plink is in the path
+        plink_path = "plink"
         if platform.system() == "Windows":
-            filename = "plink-1.07-dos.zip"
-        elif platform.system() == "Darwin":
-            filename = "plink-1.07-mac-intel.zip"
-        elif platform.system() == "Linux":
-            if platform.architecture()[0].startswith("32"):
-                filename = "plink-1.07-i686.zip"
-            elif platform.architecture()[0].startswith("64"):
-                filename = "plink-1.07-x86_64.zip"
+            plink_path += ".exe"
+
+        if find_executable(plink_path) is None:
+            # The url for each platform
+            url = "http://pngu.mgh.harvard.edu/~purcell/plink/dist/{filename}"
+
+            # Getting the name of the file
+            filename = ""
+            if platform.system() == "Windows":
+                filename = "plink-1.07-dos.zip"
+            elif platform.system() == "Darwin":
+                filename = "plink-1.07-mac-intel.zip"
+            elif platform.system() == "Linux":
+                if platform.architecture()[0].startswith("32"):
+                    filename = "plink-1.07-i686.zip"
+                elif platform.architecture()[0].startswith("64"):
+                    filename = "plink-1.07-x86_64.zip"
+                else:
+                    self.skipTest("System not compatible for Plink")
             else:
                 self.skipTest("System not compatible for Plink")
-        else:
-            self.skipTest("System not compatible for Plink")
 
-        # Downloading Plink
-        zip_path = os.path.join(self.tmp_dir, filename)
-        try:
-            urlretrieve(
-                url.format(filename=filename),
-                zip_path,
+            # Downloading Plink
+            zip_path = os.path.join(self.tmp_dir, filename)
+            try:
+                urlretrieve(
+                    url.format(filename=filename),
+                    zip_path,
+                )
+            except:
+                self.skipTest("Plink's URL is not available")
+
+            # Unzipping Plink
+            plink_dir = os.path.join(self.tmp_dir, )
+            with zipfile.ZipFile(zip_path, "r") as z:
+                z.extractall(self.tmp_dir)
+            plink_path = os.path.join(
+                self.tmp_dir, os.path.splitext(filename)[0],
+                plink_path,
             )
-        except:
-            self.skipTest("Plink's URL is not available")
+            if not os.path.isfile(plink_path):
+                self.skipTest("Cannot use Plink")
 
-        # Unzipping Plink
-        plink_dir = os.path.join(self.tmp_dir, )
-        with zipfile.ZipFile(zip_path, "r") as z:
-            z.extractall(self.tmp_dir)
-        plink_path = os.path.join(
-            self.tmp_dir, os.path.splitext(filename)[0],
-            "plink" + (".exe" if platform.system() == "Windows" else ""),
-        )
-        if not os.path.isfile(plink_path):
-            self.skipTest("Cannot use Plink")
-
-        # Making the script executable
-        if platform.system() in {"Darwin", "Linux"}:
-            os.chmod(plink_path, stat.S_IRWXU)
+            # Making the script executable
+            if platform.system() in {"Darwin", "Linux"}:
+                os.chmod(plink_path, stat.S_IRWXU)
 
         # Testing Plink works
         try:
