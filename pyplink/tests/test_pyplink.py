@@ -60,14 +60,14 @@ from ..pyplink import PyPlink
 
 def get_plink(tmp_dir):
     """Gets the Plink binary, if required."""
-    print("\n\n#########################")
-    print("Fetching Plink")
     # Checking if Plink is in the path
     plink_path = "plink"
     if platform.system() == "Windows":
         plink_path += ".exe"
 
     if find_executable(plink_path) is None:
+        print("Downloading Plink")
+
         # The url for each platform
         url = "http://pngu.mgh.harvard.edu/~purcell/plink/dist/{filename}"
 
