@@ -26,6 +26,8 @@
 
 
 import os
+import warnings
+from io import UnsupportedOperation
 
 try:
     from itertools import zip_longest as zip_longest
@@ -44,6 +46,10 @@ __license__ = "MIT"
 
 
 __all__ = ["PyPlink"]
+
+
+# Allowing for warnings
+warnings.simplefilter("once", DeprecationWarning)
 
 
 # The recoding values
@@ -66,13 +72,14 @@ class PyPlink(object):
         dtype=np.int8,
     )
 
-    def __init__(self, i_prefix, mode="r"):
+    def __init__(self, i_prefix, mode="r", bed_format="SNP-major"):
         """Initializes a new PyPlink object.
 
         Args:
             i_prefix (str): the prefix of the binary Plink files
             mode (str): the open mode for the binary Plink file
             nb_samples (int): the number of samples
+            bed_format (str): the type of bed (SNP-major or INDIVIDUAL-major)
 
         Reads or write binary Plink files (BED, BIM and FAM).
 
@@ -80,14 +87,22 @@ class PyPlink(object):
         # The mode
         self._mode = mode
 
+        # The bed format
+        if bed_format not in {"SNP-major", "INDIVIDUAL-major"}:
+            raise ValueError("invalid bed format: {}".format(bed_format))
+        self._bed_format = bed_format
+
         # These are the name of the files
         self.bed_filename = "{}.bed".format(i_prefix)
         self.bim_filename = "{}.bim".format(i_prefix)
         self.fam_filename = "{}.fam".format(i_prefix)
 
         if self._mode == "r":
-            # Checking that all the files exists (otherwise, there's nothing to
-            # do)
+            if self._bed_format != "SNP-major":
+                raise ValueError("only SNP-major format is supported "
+                                 "with mode 'r'")
+
+            # Checking that all the files exists (otherwise, error...)
             for filename in (self.bed_filename, self.bim_filename,
                              self.fam_filename):
                 if not os.path.isfile(filename):
@@ -107,7 +122,7 @@ class PyPlink(object):
 
         elif self._mode == "w":
             # The dummy number of samples and bytes
-            self._nb_samples = None
+            self._nb_values = None
 
             # Opening the output BED file
             self._bed_file = open(self.bed_filename, "wb")
@@ -118,13 +133,19 @@ class PyPlink(object):
 
     def __repr__(self):
         """The representation of the PyPlink object."""
-        return "PyPlink({:,d} samples; {:,d} markers)".format(
-            self.get_nb_samples(),
-            self.get_nb_markers(),
-        )
+        if self._mode == "r":
+            return "PyPlink({:,d} samples; {:,d} markers)".format(
+                self.get_nb_samples(),
+                self.get_nb_markers(),
+            )
+
+        return 'PyPlink(mode="w")'
 
     def __iter__(self):
         """The __iter__ function."""
+        if self._mode != "r":
+            raise UnsupportedOperation("not available in 'w' mode")
+
         return self
 
     def __next__(self):
@@ -137,12 +158,19 @@ class PyPlink(object):
 
     def __exit__(self, *args):
         """Exiting the context manager."""
+        self.close()
+
+    def close(self):
+        """Closes the BED file if required."""
         if self._mode == "w":
             # Closing the BED file
             self._bed_file.close()
 
     def next(self):
         """The next function."""
+        if self._mode != "r":
+            raise UnsupportedOperation("not available in 'w' mode")
+
         if self._n < self._nb_markers:
             self._n += 1
 
@@ -154,6 +182,9 @@ class PyPlink(object):
 
     def seek(self, n):
         """Gets to a certain position in the BED file when iterating."""
+        if self._mode != "r":
+            raise UnsupportedOperation("not available in 'w' mode")
+
         if 0 <= n < len(self._bed):
             self._n = n
 
@@ -193,10 +224,16 @@ class PyPlink(object):
 
     def get_bim(self):
         """Returns the BIM file."""
+        if self._mode != "r":
+            raise UnsupportedOperation("not available in 'w' mode")
+
         return self._bim.drop("i", axis=1)
 
     def get_nb_markers(self):
         """Returns the number of markers."""
+        if self._mode != "r":
+            raise UnsupportedOperation("not available in 'w' mode")
+
         return self._nb_markers
 
     def _read_fam(self):
@@ -223,10 +260,16 @@ class PyPlink(object):
 
     def get_fam(self):
         """Returns the FAM file."""
+        if self._mode != "r":
+            raise UnsupportedOperation("not available in 'w' mode")
+
         return self._fam.drop(["byte", "bit"], axis=1)
 
     def get_nb_samples(self):
         """Returns the number of samples."""
+        if self._mode != "r":
+            raise UnsupportedOperation("not available in 'w' mode")
+
         return self._nb_samples
 
     def _read_bed(self):
@@ -244,7 +287,7 @@ class PyPlink(object):
 
             # Checking that the format is SNP-major
             if ord(bed_file.read(1)) != 1:
-                raise ValueError("not in SNP-major format: "
+                raise ValueError("not in SNP-major format (please recode): "
                                  "{}".format(self.bed_filename))
 
             # The number of bytes per marker
@@ -265,16 +308,23 @@ class PyPlink(object):
     def _write_bed_header(self):
         """Writes the BED first 3 bytes."""
         # Writing the first three bytes
-        self._bed_file.write(bytearray((108, 27, 1)))
+        final_byte = 1 if self._bed_format == "SNP-major" else 0
+        self._bed_file.write(bytearray((108, 27, final_byte)))
 
     def iter_geno(self):
         """Iterates over genotypes."""
+        if self._mode != "r":
+            raise UnsupportedOperation("not available in 'w' mode")
+
         for i in range(len(self._bed)):
             geno = self._geno_values[self._bed[i]].flatten(order="C")
             yield self._markers[i], geno[:self._nb_samples]
 
     def iter_acgt_geno(self):
         """Iterates over genotypes (ACGT format)."""
+        if self._mode != "r":
+            raise UnsupportedOperation("not available in 'w' mode")
+
         for i in range(len(self._bed)):
             geno = self._geno_values[self._bed[i]].flatten(order="C")
             yield (self._markers[i],
@@ -282,6 +332,9 @@ class PyPlink(object):
 
     def iter_geno_marker(self, markers):
         """Iterates over genotypes for given markers."""
+        if self._mode != "r":
+            raise UnsupportedOperation("not available in 'w' mode")
+
         # If string, we change to list
         if isinstance(markers, str):
             markers = [markers]
@@ -303,6 +356,9 @@ class PyPlink(object):
 
     def get_geno_marker(self, marker):
         """Gets the genotypes for a given marker."""
+        if self._mode != "r":
+            raise UnsupportedOperation("not available in 'w' mode")
+
         # Check if the marker exists
         if marker not in set(self._bim.index):
             raise ValueError("{}: marker not in BIM".format(marker))
@@ -315,6 +371,9 @@ class PyPlink(object):
 
     def iter_acgt_geno_marker(self, markers):
         """Iterates over genotypes for given markers (ACGT format)."""
+        if self._mode != "r":
+            raise UnsupportedOperation("not available in 'w' mode")
+
         # If string, we change to list
         if isinstance(markers, str):
             markers = [markers]
@@ -336,6 +395,9 @@ class PyPlink(object):
 
     def get_acgt_geno_marker(self, marker):
         """Gets the genotypes for a given marker (ACGT format)."""
+        if self._mode != "r":
+            raise UnsupportedOperation("not available in 'w' mode")
+
         # Check if the marker exists
         if marker not in set(self._bim.index):
             raise ValueError("{}: marker not in BIM".format(marker))
@@ -347,15 +409,23 @@ class PyPlink(object):
         return self._allele_encoding[i][geno[:self._nb_samples]]
 
     def write_marker(self, genotypes):
+        """Deprecated function."""
+        warnings.warn("deprecated: use 'write_genotypes'", DeprecationWarning)
+        self.write_genotypes(genotypes)
+
+    def write_genotypes(self, genotypes):
         """Write genotypes to binary file."""
+        if self._mode != "w":
+            raise UnsupportedOperation("not available in 'r' mode")
+
         # Initializing the number of samples if required
-        if self._nb_samples is None:
-            self._nb_samples = len(genotypes)
+        if self._nb_values is None:
+            self._nb_values = len(genotypes)
 
         # Checking the expected number of samples
-        if self._nb_samples != len(genotypes):
+        if self._nb_values != len(genotypes):
             raise ValueError("{:,d} samples expected, got {:,d}".format(
-                self._nb_samples,
+                self._nb_values,
                 len(genotypes),
             ))
 

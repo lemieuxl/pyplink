@@ -69,9 +69,9 @@ To test the module, just perform the following command:
 ```python
 >>> import pyplink
 >>> pyplink.test()
-.......................
+............................................
 ----------------------------------------------------------------------
-Ran 23 tests in 0.149s
+Ran 44 tests in 0.468s
 
 OK
 ```

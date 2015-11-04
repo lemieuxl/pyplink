@@ -32,7 +32,9 @@ import shutil
 import zipfile
 import platform
 import unittest
+import warnings
 from tempfile import mkdtemp
+from io import UnsupportedOperation
 from distutils.spawn import find_executable
 from subprocess import check_call, PIPE, CalledProcessError
 
@@ -54,6 +56,74 @@ import pandas as pd
 from six.moves import range
 
 from ..pyplink import PyPlink
+
+
+def get_plink(tmp_dir):
+    """Gets the Plink binary, if required."""
+    # Checking if Plink is in the path
+    plink_path = "plink"
+    if platform.system() == "Windows":
+        plink_path += ".exe"
+
+    if find_executable(plink_path) is None:
+        print("Downloading Plink")
+
+        # The url for each platform
+        url = "http://pngu.mgh.harvard.edu/~purcell/plink/dist/{filename}"
+
+        # Getting the name of the file
+        filename = ""
+        if platform.system() == "Windows":
+            filename = "plink-1.07-dos.zip"
+        elif platform.system() == "Darwin":
+            filename = "plink-1.07-mac-intel.zip"
+        elif platform.system() == "Linux":
+            if platform.architecture()[0].startswith("32"):
+                filename = "plink-1.07-i686.zip"
+            elif platform.architecture()[0].startswith("64"):
+                filename = "plink-1.07-x86_64.zip"
+            else:
+                return None, "System not compatible for Plink"
+        else:
+            return None, "System not compatible for Plink"
+
+        # Downloading Plink
+        zip_path = os.path.join(tmp_dir, filename)
+        try:
+            urlretrieve(
+                url.format(filename=filename),
+                zip_path,
+            )
+        except:
+            return None, "Plink's URL is not available"
+
+        # Unzipping Plink
+        plink_dir = os.path.join(tmp_dir, )
+        with zipfile.ZipFile(zip_path, "r") as z:
+            z.extractall(tmp_dir)
+        plink_path = os.path.join(tmp_dir, os.path.splitext(filename)[0],
+                                  plink_path)
+        if not os.path.isfile(plink_path):
+            return None, "Cannot use Plink"
+
+        # Making the script executable
+        if platform.system() in {"Darwin", "Linux"}:
+            os.chmod(plink_path, stat.S_IRWXU)
+
+    # Testing Plink works
+    try:
+        check_call([
+            plink_path,
+            "--noweb",
+            "--help",
+            "--out", os.path.join(tmp_dir, "execution_test")
+        ], stdout=PIPE, stderr=PIPE)
+    except CalledProcessError:
+        return None, "Plink cannot be properly used"
+    except IOError:
+        return None, "Plink was not properly installed"
+
+    return plink_path, "OK"
 
 
 class TestPyPlink(unittest.TestCase):
@@ -95,8 +165,12 @@ class TestPyPlink(unittest.TestCase):
                               ["AA", "GA", "GG"], ["TT", "TT", "TT"],
                               ["GC", "CC", "CC"], ["GG", "AG", "GG"]]
 
-        # Reading the files
-        cls.pedfile = PyPlink(cls.prefix)
+        # Getting Plink
+        cls.plink_path, cls.plink_message = get_plink(cls.tmp_dir)
+
+    def setUp(self):
+        # Reading the plink binary file
+        self.pedfile = PyPlink(self.prefix)
 
     @classmethod
     def tearDownClass(cls):
@@ -206,8 +280,10 @@ class TestPyPlink(unittest.TestCase):
         # This should raise an exception
         with self.assertRaises(ValueError) as cm:
             PyPlink(new_prefix)
-        self.assertEqual("not in SNP-major format: {}".format(new_bed),
-                         str(cm.exception))
+        self.assertEqual(
+            "not in SNP-major format (please recode): {}".format(new_bed),
+            str(cm.exception),
+        )
 
     def test_missing_files(self):
         """Checks that an exception is raised when an input file is missing."""
@@ -231,9 +307,25 @@ class TestPyPlink(unittest.TestCase):
         """Tests that the correct number of markers is returned."""
         self.assertEqual(self.pedfile.get_nb_markers(), 10)
 
+    def test_get_nb_markers_w_mode(self):
+        """Tests that an exception is raised if in write mode."""
+        with self.assertRaises(UnsupportedOperation) as cm:
+            # Creating the dummy PyPlink object
+            with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
+                p.get_nb_markers()
+        self.assertEqual("not available in 'w' mode", str(cm.exception))
+
     def test_get_nb_samples(self):
         """Tests that the correct number of samples is returned."""
         self.assertEqual(self.pedfile.get_nb_samples(), 3)
+
+    def test_get_nb_samples_w_mode(self):
+        """Tests that an exception is raised if in write mode."""
+        with self.assertRaises(UnsupportedOperation) as cm:
+            # Creating the dummy PyPlink object
+            with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
+                p.get_nb_samples()
+        self.assertEqual("not available in 'w' mode", str(cm.exception))
 
     def test_get_bim(self):
         """Tests the 'get_bim' function."""
@@ -280,6 +372,14 @@ class TestPyPlink(unittest.TestCase):
         self.assertFalse(comparison.all().chrom)
         self.assertFalse(comparison.all().cm)
         self.assertTrue(comparison.all()[["pos", "a1", "a2"]].all())
+
+    def test_get_bim_w_mode(self):
+        """Tests that an exception is raised if in write mode."""
+        with self.assertRaises(UnsupportedOperation) as cm:
+            # Creating the dummy PyPlink object
+            with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
+                p.get_bim()
+        self.assertEqual("not available in 'w' mode", str(cm.exception))
 
     def test_get_fam(self):
         """Tests the 'get_fam' function."""
@@ -330,6 +430,14 @@ class TestPyPlink(unittest.TestCase):
             comparison.all()[["fid", "iid", "mother", "gender"]].all()
         )
 
+    def test_get_fam_w_mode(self):
+        """Tests that an exception is raised if in write mode."""
+        with self.assertRaises(UnsupportedOperation) as cm:
+            # Creating the dummy PyPlink object
+            with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
+                p.get_fam()
+        self.assertEqual("not available in 'w' mode", str(cm.exception))
+
     def test_generator(self):
         """Testing the class as a generator."""
         # Zipping and checking
@@ -345,8 +453,30 @@ class TestPyPlink(unittest.TestCase):
         remaining = [(marker, geno) for marker, geno in self.pedfile]
         self.assertEqual(0, len(remaining))
 
-        # Just to be sure, we seek at the beginning of the file
-        self.pedfile.seek(0)
+    def test_generator_w_mode(self):
+        """Tests that an exception is raised if in write mode."""
+        with self.assertRaises(UnsupportedOperation) as cm:
+            # Creating the dummy PyPlink object
+            with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
+                for marker, genotypes in p:
+                    pass
+        self.assertEqual("not available in 'w' mode", str(cm.exception))
+
+    def test_next(self):
+        """Tests that an exception is raised when calling next in w mode."""
+        marker, genotypes = self.pedfile.next()
+
+        # Comparing
+        self.assertEqual(self.markers[0], marker)
+        self.assertTrue((self.genotypes[0] == genotypes).all())
+
+    def test_next_w_mode(self):
+        """Tests that an exception is raised when calling next in w mode."""
+        with self.assertRaises(UnsupportedOperation) as cm:
+            # Creating the dummy PyPlink object
+            with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
+                p.next()
+        self.assertEqual("not available in 'w' mode", str(cm.exception))
 
     def test_seek(self):
         """Testing the seeking (for the generator)."""
@@ -387,8 +517,13 @@ class TestPyPlink(unittest.TestCase):
             self.pedfile.seek(100)
         self.assertEqual("invalid position in BED: 100", str(cm.exception))
 
-        # Just to be sure, we seek at the beginning of the file
-        self.pedfile.seek(0)
+    def test_seek_w_mode(self):
+        """Tests that an exception is raised if in write mode."""
+        with self.assertRaises(UnsupportedOperation) as cm:
+            # Creating the dummy PyPlink object
+            with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
+                p.seek(100)
+        self.assertEqual("not available in 'w' mode", str(cm.exception))
 
     def test_iter_geno(self):
         """Tests the 'iter_geno' function."""
@@ -400,6 +535,15 @@ class TestPyPlink(unittest.TestCase):
             self.assertEqual(e_marker, marker)
             self.assertTrue((e_geno == geno).all())
 
+    def test_iter_geno_w_mode(self):
+        """Tests that an exception is raised if in write mode."""
+        with self.assertRaises(UnsupportedOperation) as cm:
+            # Creating the dummy PyPlink object
+            with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
+                for marker, genotypes in p.iter_geno():
+                    pass
+        self.assertEqual("not available in 'w' mode", str(cm.exception))
+
     def test_iter_acgt_geno(self):
         """Tests the 'iter_acgt_geno" function."""
         zipped = zip(
@@ -409,6 +553,15 @@ class TestPyPlink(unittest.TestCase):
         for (e_marker, e_geno), (marker, geno) in zipped:
             self.assertEqual(e_marker, marker)
             self.assertTrue((e_geno == geno).all())
+
+    def test_iter_acgt_geno_w_mode(self):
+        """Tests that an exception is raised if in write mode."""
+        with self.assertRaises(UnsupportedOperation) as cm:
+            # Creating the dummy PyPlink object
+            with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
+                for marker, genotypes in p.iter_acgt_geno():
+                    pass
+        self.assertEqual("not available in 'w' mode", str(cm.exception))
 
     def test_iter_geno_marker(self):
         """Tests the 'iter_geno_marker' function."""
@@ -443,6 +596,15 @@ class TestPyPlink(unittest.TestCase):
         self.assertEqual("['unknown_1', 'unknown_2']: marker not in BIM",
                          str(cm.exception))
 
+    def test_iter_geno_marker_w_mode(self):
+        """Tests that an exception is raised if in write mode."""
+        with self.assertRaises(UnsupportedOperation) as cm:
+            # Creating the dummy PyPlink object
+            with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
+                for marker, genotypes in p.iter_geno_marker(["M1", "M2"]):
+                    pass
+        self.assertEqual("not available in 'w' mode", str(cm.exception))
+
     def test_iter_acgt_geno_marker(self):
         """Tests the 'iter_acgt_geno_marker' function."""
         # Getting a subset of indexes
@@ -476,8 +638,17 @@ class TestPyPlink(unittest.TestCase):
         self.assertEqual("['unknown_3', 'unknown_4']: marker not in BIM",
                          str(cm.exception))
 
-    def test_repr(self):
-        """Tests the object representation of the string."""
+    def test_iter_acgt_geno_marker_w_mode(self):
+        """Tests that an exception is raised if in write mode."""
+        with self.assertRaises(UnsupportedOperation) as cm:
+            # Creating the dummy PyPlink object
+            with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
+                for marker, genotypes in p.iter_acgt_geno_marker(["M1", "M2"]):
+                    pass
+        self.assertEqual("not available in 'w' mode", str(cm.exception))
+
+    def test_repr_r_mode(self):
+        """Tests the object representation of the string (r mode)."""
         # Counting the number of samples
         nb_samples = None
         with open(self.fam, "r") as i_file:
@@ -498,6 +669,21 @@ class TestPyPlink(unittest.TestCase):
         # Comparing
         self.assertEqual(e_repr, o_repr)
 
+    def test_repr_w_mode(self):
+        """Tests the object representation of the string (w mode)."""
+        # The expected representation
+        e_repr = 'PyPlink(mode="w")'
+
+        # Creating the dummy PyPlink object
+        pedfile = PyPlink(os.path.join(self.tmp_dir, "test_repr"), "w")
+
+        # Comparing the expected with the observed representation
+        o_repr = str(pedfile)
+        self.assertEqual(e_repr, o_repr)
+
+        # Closing the file
+        pedfile.close()
+
     def test_get_geno_marker(self):
         """Tests the 'get_geno_marker' function."""
         # Getting a random marker to test
@@ -517,6 +703,14 @@ class TestPyPlink(unittest.TestCase):
             str(cm.exception),
         )
 
+    def test_get_geno_marker_w_mode(self):
+        """Tests that an exception is raised if in write mode."""
+        with self.assertRaises(UnsupportedOperation) as cm:
+            # Creating the dummy PyPlink object
+            with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
+                genotypes = p.get_geno_marker("M1")
+        self.assertEqual("not available in 'w' mode", str(cm.exception))
+
     def test_get_acgt_geno_marker(self):
         """Tests the 'get_acgt_geno_marker' function."""
         # Getting a random marker to test
@@ -532,6 +726,14 @@ class TestPyPlink(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
             self.pedfile.get_acgt_geno_marker("dummy_marker")
         self.assertEqual("dummy_marker: marker not in BIM", str(cm.exception))
+
+    def test_get_acgt_geno_marker_w_mode(self):
+        """Tests that an exception is raised if in write mode."""
+        with self.assertRaises(UnsupportedOperation) as cm:
+            # Creating the dummy PyPlink object
+            with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
+                genotypes = p.get_acgt_geno_marker("M1")
+        self.assertEqual("not available in 'w' mode", str(cm.exception))
 
     def test_get_context_read_mode(self):
         """Tests the PyPlink object as context manager."""
@@ -549,9 +751,9 @@ class TestPyPlink(unittest.TestCase):
         """Tests writing a Plink binary file."""
         # The expected genotypes
         expected_genotypes = [
-            np.array([0, 0, 0, 1, 0, 1, 2], dtype=int),
-            np.array([0, 0, 0, 0, -1, 0, 1], dtype=int),
-            np.array([0, -1, -1, 2, 0, 0, 0], dtype=int),
+            np.array([0,  0,  0, 1,  0, 1, 2], dtype=int),
+            np.array([0,  0,  0, 0, -1, 0, 1], dtype=int),
+            np.array([0, -1, -1, 2,  0, 0, 0], dtype=int),
         ]
 
         # The prefix
@@ -560,7 +762,7 @@ class TestPyPlink(unittest.TestCase):
         # Writing the binary file
         with PyPlink(test_prefix, "w") as pedfile:
             for genotypes in expected_genotypes:
-                pedfile.write_marker(genotypes)
+                pedfile.write_genotypes(genotypes)
 
         # Checking the file exists
         self.assertTrue(os.path.isfile(test_prefix + ".bed"))
@@ -599,7 +801,7 @@ class TestPyPlink(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
             with PyPlink(test_prefix, "w") as pedfile:
                 for genotypes in expected_genotypes:
-                    pedfile.write_marker(genotypes)
+                    pedfile.write_genotypes(genotypes)
         self.assertEqual("7 samples expected, got 6", str(cm.exception))
 
     def test_grouper_padding(self):
@@ -628,68 +830,9 @@ class TestPyPlink(unittest.TestCase):
                      "Plink not available for {}".format(platform.system()))
     def test_with_plink(self):
         """Tests to read a binary file using Plink."""
-        # Checking if Plink is in the path
-        plink_path = "plink"
-        if platform.system() == "Windows":
-            plink_path += ".exe"
-
-        if find_executable(plink_path) is None:
-            # The url for each platform
-            url = "http://pngu.mgh.harvard.edu/~purcell/plink/dist/{filename}"
-
-            # Getting the name of the file
-            filename = ""
-            if platform.system() == "Windows":
-                filename = "plink-1.07-dos.zip"
-            elif platform.system() == "Darwin":
-                filename = "plink-1.07-mac-intel.zip"
-            elif platform.system() == "Linux":
-                if platform.architecture()[0].startswith("32"):
-                    filename = "plink-1.07-i686.zip"
-                elif platform.architecture()[0].startswith("64"):
-                    filename = "plink-1.07-x86_64.zip"
-                else:
-                    self.skipTest("System not compatible for Plink")
-            else:
-                self.skipTest("System not compatible for Plink")
-
-            # Downloading Plink
-            zip_path = os.path.join(self.tmp_dir, filename)
-            try:
-                urlretrieve(
-                    url.format(filename=filename),
-                    zip_path,
-                )
-            except:
-                self.skipTest("Plink's URL is not available")
-
-            # Unzipping Plink
-            plink_dir = os.path.join(self.tmp_dir, )
-            with zipfile.ZipFile(zip_path, "r") as z:
-                z.extractall(self.tmp_dir)
-            plink_path = os.path.join(
-                self.tmp_dir, os.path.splitext(filename)[0],
-                plink_path,
-            )
-            if not os.path.isfile(plink_path):
-                self.skipTest("Cannot use Plink")
-
-            # Making the script executable
-            if platform.system() in {"Darwin", "Linux"}:
-                os.chmod(plink_path, stat.S_IRWXU)
-
-        # Testing Plink works
-        try:
-            check_call([
-                plink_path,
-                "--noweb",
-                "--help",
-                "--out", os.path.join(self.tmp_dir, "execution_test")
-            ], stdout=PIPE, stderr=PIPE)
-        except CalledProcessError:
-            self.skipTest("Plink cannot be properly used")
-        except IOError:
-            self.skipTest("Plink was not properly installed")
+        # Checking if we need to skip
+        if self.plink_path is None:
+            self.skipTest(self.plink_message)
 
         # Creating the BED file
         all_genotypes = [
@@ -700,7 +843,7 @@ class TestPyPlink(unittest.TestCase):
         prefix = os.path.join(self.tmp_dir, "test_output")
         with PyPlink(prefix, "w") as pedfile:
             for genotypes in all_genotypes:
-                pedfile.write_marker(genotypes)
+                pedfile.write_genotypes(genotypes)
 
         # Creating the FAM file
         fam_content = [
@@ -733,7 +876,7 @@ class TestPyPlink(unittest.TestCase):
         out_prefix = prefix + "_transposed"
         try:
             check_call([
-                plink_path,
+                self.plink_path,
                 "--noweb",
                 "--bfile", prefix,
                 "--recode", "--transpose", "--tab",
@@ -776,3 +919,139 @@ class TestPyPlink(unittest.TestCase):
 
             # Checking this is the end of the file
             self.assertEqual("", i_file.readline())
+
+    @unittest.skipIf(platform.system() not in {"Darwin", "Linux", "Windows"},
+                     "Plink not available for {}".format(platform.system()))
+    def test_with_plink_individual_major(self):
+        """Tests to read a binary file (INDIVIDUAL-major) using Plink."""
+        # Checking if we need to skip
+        if self.plink_path is None:
+            self.skipTest(self.plink_message)
+
+        # The genotypes
+        all_genotypes = [
+            [0, 1, 0, 0, -1, 0, 1, 0, 0, 2],
+            [2, 1, 2, 2,  2, 2, 2, 1, 0, 1],
+            [0, 0, 0, 0,  0, 1, 0, 0, 0, 0],
+        ]
+        transposed_genotypes = [
+            [row[i] for row in all_genotypes]
+            for i in range(len(all_genotypes[0]))
+        ]
+
+        # Creating the BED file (INDIVIDUAL-major)
+        prefix = os.path.join(self.tmp_dir, "test_output")
+        with PyPlink(prefix, "w", "INDIVIDUAL-major") as pedfile:
+            for genotypes in transposed_genotypes:
+                pedfile.write_genotypes(genotypes)
+
+        # Creating the FAM file
+        fam_content = [
+            ["F0", "S0", "0", "0", "1", "-9"],
+            ["F1", "S1", "0", "0", "1", "-9"],
+            ["F2", "S2", "0", "0", "2", "-9"],
+            ["F3", "S3", "0", "0", "1", "-9"],
+            ["F4", "S4", "0", "0", "1", "-9"],
+            ["F5", "S5", "0", "0", "2", "-9"],
+            ["F6", "S6", "0", "0", "1", "-9"],
+            ["F7", "S7", "0", "0", "0", "-9"],
+            ["F8", "S8", "0", "0", "1", "-9"],
+            ["F9", "S9", "0", "0", "2", "-9"],
+        ]
+        with open(prefix + ".fam", "w") as o_file:
+            for sample in fam_content:
+                print(*sample, sep=" ", file=o_file)
+
+        # Creating the BIM file
+        bim_content = [
+            ["1", "M0", "0", "123", "A", "G"],
+            ["1", "M1", "0", "124", "C", "T"],
+            ["2", "M2", "0", "117", "G", "C"],
+        ]
+        with open(prefix + ".bim", "w") as o_file:
+            for marker in bim_content:
+                print(*marker, sep="\t", file=o_file)
+
+        # Creating a transposed pedfile using Plink
+        out_prefix = prefix + "_transposed"
+        try:
+            check_call([
+                self.plink_path,
+                "--noweb",
+                "--bfile", prefix,
+                "--recode", "--transpose", "--tab",
+                "--out", out_prefix,
+            ], stdout=PIPE, stderr=PIPE)
+        except CalledProcessError:
+            self.fail("Plink could not recode file")
+
+        # Checking the two files exists
+        self.assertTrue(os.path.isfile(out_prefix + ".tped"))
+        self.assertTrue(os.path.isfile(out_prefix + ".tfam"))
+
+        # Checking the content of the TFAM file
+        expected = "\n".join("\t".join(sample) for sample in fam_content)
+        with open(out_prefix + ".tfam", "r") as i_file:
+            self.assertEqual(expected + "\n", i_file.read())
+
+        # Checking the content of the TPED file
+        with open(out_prefix + ".tped", "r") as i_file:
+            # Checking the first marker
+            marker_1 = i_file.readline().rstrip("\r\n").split("\t")
+            self.assertEqual(["1", "M0", "0", "123"], marker_1[:4])
+            self.assertEqual(["G G", "A G", "G G", "G G", "0 0", "G G", "A G",
+                              "G G", "G G", "A A"],
+                             marker_1[4:])
+
+            # Checking the second marker
+            marker_2 = i_file.readline().rstrip("\r\n").split("\t")
+            self.assertEqual(["1", "M1", "0", "124"], marker_2[:4])
+            self.assertEqual(["C C", "T C", "C C", "C C", "C C", "C C", "C C",
+                              "T C", "T T", "T C"],
+                             marker_2[4:])
+
+            # Checking the third marker
+            marker_3 = i_file.readline().rstrip("\r\n").split("\t")
+            self.assertEqual(["2", "M2", "0", "117"], marker_3[:4])
+            self.assertEqual(["C C", "C C", "C C", "C C", "C C", "G C", "C C",
+                              "C C", "C C", "C C"],
+                             marker_3[4:])
+
+            # Checking this is the end of the file
+            self.assertEqual("", i_file.readline())
+
+    def test_wrong_bed_format(self):
+        """Tests opening a BED file with unknown format."""
+        with self.assertRaises(ValueError) as cm:
+            PyPlink(self.prefix, bed_format="UNKNOWN-major")
+        self.assertEqual(
+            "invalid bed format: UNKNOWN-major",
+            str(cm.exception),
+        )
+
+    def test_invalid_bed_format_with_r_mode(self):
+        """Tests an invalid BED format with r mode."""
+        with self.assertRaises(ValueError) as cm:
+            PyPlink(self.prefix, bed_format="INDIVIDUAL-major")
+        self.assertEqual(
+            "only SNP-major format is supported with mode 'r'",
+            str(cm.exception),
+        )
+
+    def test_write_genotypes_in_r_mode(self):
+        """Tests to use the 'write_genotypes' function in read mode."""
+        with self.assertRaises(UnsupportedOperation) as cm:
+            self.pedfile.write_genotypes([0, 0, 0])
+        self.assertEqual("not available in 'r' mode", str(cm.exception))
+
+    def test_write_marker_deprecation_warning(self):
+        """Tests that a deprecation warning is triggered."""
+        with warnings.catch_warnings(record=True) as w:
+            with PyPlink(os.path.join(self.tmp_dir, "test_warns"), "w") as p:
+                p.write_marker([0, 0, 0])
+            self.assertEqual(1, len(w))
+            self.assertTrue(issubclass(w[0].category, DeprecationWarning))
+            self.assertEqual(
+                "deprecated: use 'write_genotypes'",
+                str(w[0].message),
+            )
