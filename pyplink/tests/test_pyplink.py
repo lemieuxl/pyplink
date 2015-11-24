@@ -458,8 +458,7 @@ class TestPyPlink(unittest.TestCase):
         with self.assertRaises(UnsupportedOperation) as cm:
             # Creating the dummy PyPlink object
             with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
-                for marker, genotypes in p:
-                    pass
+                marker, genotypes = next(p)
         self.assertEqual("not available in 'w' mode", str(cm.exception))
 
     def test_next(self):
@@ -540,8 +539,7 @@ class TestPyPlink(unittest.TestCase):
         with self.assertRaises(UnsupportedOperation) as cm:
             # Creating the dummy PyPlink object
             with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
-                for marker, genotypes in p.iter_geno():
-                    pass
+                marker, genotypes = next(p.iter_geno())
         self.assertEqual("not available in 'w' mode", str(cm.exception))
 
     def test_iter_acgt_geno(self):
@@ -559,8 +557,7 @@ class TestPyPlink(unittest.TestCase):
         with self.assertRaises(UnsupportedOperation) as cm:
             # Creating the dummy PyPlink object
             with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
-                for marker, genotypes in p.iter_acgt_geno():
-                    pass
+                marker, genotypes = next(p.iter_acgt_geno())
         self.assertEqual("not available in 'w' mode", str(cm.exception))
 
     def test_iter_geno_marker(self):
@@ -601,8 +598,7 @@ class TestPyPlink(unittest.TestCase):
         with self.assertRaises(UnsupportedOperation) as cm:
             # Creating the dummy PyPlink object
             with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
-                for marker, genotypes in p.iter_geno_marker(["M1", "M2"]):
-                    pass
+                marker, genotypes = next(p.iter_geno_marker(["M1", "M2"]))
         self.assertEqual("not available in 'w' mode", str(cm.exception))
 
     def test_iter_acgt_geno_marker(self):
@@ -643,8 +639,7 @@ class TestPyPlink(unittest.TestCase):
         with self.assertRaises(UnsupportedOperation) as cm:
             # Creating the dummy PyPlink object
             with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
-                for marker, genotypes in p.iter_acgt_geno_marker(["M1", "M2"]):
-                    pass
+                marker, genotypes = next(p.iter_acgt_geno_marker(["M1", "M2"]))
         self.assertEqual("not available in 'w' mode", str(cm.exception))
 
     def test_repr_r_mode(self):
@@ -711,6 +706,14 @@ class TestPyPlink(unittest.TestCase):
                 genotypes = p.get_geno_marker("M1")
         self.assertEqual("not available in 'w' mode", str(cm.exception))
 
+    def test_get_iter_w_mode(self):
+        """Tests that an exception is raised if in write mode."""
+        with self.assertRaises(UnsupportedOperation) as cm:
+            # Creating the dummy PyPlink object
+            with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
+                genotypes = iter(p)
+        self.assertEqual("not available in 'w' mode", str(cm.exception))
+
     def test_get_acgt_geno_marker(self):
         """Tests the 'get_acgt_geno_marker' function."""
         # Getting a random marker to test
@@ -743,8 +746,7 @@ class TestPyPlink(unittest.TestCase):
     def test_invalid_mode(self):
         """Tests invalid mode when PyPlink as context manager."""
         with self.assertRaises(ValueError) as cm:
-            with PyPlink(self.prefix, "u") as genotypes:
-                pass
+            genotypes = PyPlink(self.prefix, "u")
         self.assertEqual("invalid mode: 'u'", str(cm.exception))
 
     def test_write_binary(self):
@@ -800,8 +802,8 @@ class TestPyPlink(unittest.TestCase):
         # Writing the binary file
         with self.assertRaises(ValueError) as cm:
             with PyPlink(test_prefix, "w") as pedfile:
-                for genotypes in expected_genotypes:
-                    pedfile.write_genotypes(genotypes)
+                pedfile.write_genotypes(expected_genotypes[0])  # 7 genotypes
+                pedfile.write_genotypes(expected_genotypes[1])  # 6 genotypes
         self.assertEqual("7 samples expected, got 6", str(cm.exception))
 
     def test_grouper_padding(self):
