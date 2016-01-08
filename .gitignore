@@ -9,7 +9,6 @@ test
 pyplink/version.py
 
 .coverage
-.coveragerc
 htmlcov
 
 .ipynb_checkpoints
