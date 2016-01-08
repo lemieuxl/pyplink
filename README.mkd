@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/lemieuxl/pyplink.svg?branch=master)](https://travis-ci.org/lemieuxl/pyplink)
+[![Coverage Status](https://coveralls.io/repos/lemieuxl/pyplink/badge.svg?branch=dev&service=github)](https://coveralls.io/github/lemieuxl/pyplink?branch=dev)
 [![PyPI version](https://badge.fury.io/py/pyplink.svg)](http://badge.fury.io/py/pyplink)
 
 
