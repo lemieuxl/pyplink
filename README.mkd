@@ -49,7 +49,7 @@ conda config --add channels http://statgen.org/wp-content/uploads/Softwares/pypl
 To update the module using `pip`:
 
 ```bash
-pip install -U puplink
+pip install -U pyplink
 ```
 
 To update the module using `conda`:
