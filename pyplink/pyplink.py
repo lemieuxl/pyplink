@@ -389,21 +389,14 @@ class PyPlink(object):
 
     def get_acgt_geno_marker(self, marker):
         """Gets the genotypes for a given marker (ACGT format)."""
-        if self._mode != "r":
-            raise UnsupportedOperation("not available in 'w' mode")
+        # Getting the marker's genotypes
+        geno = self.get_geno_marker(marker)
 
-        # Check if the marker exists
-        if marker not in set(self._bim.index):
-            raise ValueError("{}: marker not in BIM".format(marker))
+        # Getting the marker's position
+        snp_position = self._bim.loc[marker, "i"]
 
-        # Seeking to the correct position
-        seek_position = self._bim.loc[marker, "i"]
-        self.seek(seek_position)
-
-        # Getting the genotypes and converting them to ACGT
-        geno = self._read_current_marker()
-
-        return self._allele_encoding[seek_position][geno]
+        # Returning the ACGT's format of the genotypes
+        return self._allele_encoding[snp_position][geno]
 
     def write_marker(self, genotypes):
         """Deprecated function."""
