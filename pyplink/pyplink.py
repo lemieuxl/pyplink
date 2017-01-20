@@ -333,14 +333,8 @@ class PyPlink(object):
 
     def iter_acgt_geno(self):
         """Iterates over genotypes (ACGT format)."""
-        if self._mode != "r":
-            raise UnsupportedOperation("not available in 'w' mode")
-
-        # Seeking back at the beginning of the file
-        self.seek(0)
-
         # Need to iterate over itself, and modify the actual genotypes
-        for i, (marker, geno) in enumerate(self):
+        for i, (marker, geno) in enumerate(self.iter_geno()):
             yield marker, self._allele_encoding[i][geno]
 
     def iter_geno_marker(self, markers):
