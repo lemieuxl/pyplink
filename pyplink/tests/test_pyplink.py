@@ -231,22 +231,20 @@ class TestPyPlink(unittest.TestCase):
             o_file.write(i_file.read())
 
         # Copying the BIM file
-        new_fam = new_prefix + ".bim"
-        with open(new_fam, "w") as o_file, open(self.fam, "r") as i_file:
+        new_bim = new_prefix + ".bim"
+        with open(new_bim, "w") as o_file, open(self.bim, "r") as i_file:
             o_file.write(i_file.read())
 
-        # TODO: Change to parse the actual file completely (since we no longer
-        # load to memory
-#        # Creating a new BED file with invalid number of bytes
-#        new_bed = new_prefix + ".bed"
-#        with open(new_bed, "wb") as o_file:
-#            o_file.write(bytearray([108, 27, 1, 1, 2, 3, 4]))
+        # Creating a new BED file with invalid number of bytes
+        new_bed = new_prefix + ".bed"
+        with open(new_bed, "wb") as o_file:
+            o_file.write(bytearray([108, 27, 1, 1, 2, 3, 4]))
 
-#        # This should raise an exception
-#        with self.assertRaises(ValueError) as cm:
-#            PyPlink(new_prefix)
-#        self.assertEqual("invalid number of entries: {}".format(new_bed),
-#                         str(cm.exception))
+        # This should raise an exception
+        with self.assertRaises(ValueError) as cm:
+            PyPlink(new_prefix)
+        self.assertEqual("invalid number of entries: corrupted BED?",
+                         str(cm.exception))
 
         # Creating a new BED file with invalid first byte
         new_bed = new_prefix + ".bed"

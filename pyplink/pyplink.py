@@ -285,7 +285,11 @@ class PyPlink(object):
         if (self._bim is None) or (self._fam is None):
             raise RuntimeError("no BIM or FAM file were read")
 
-        # Checking the file is valid by looking at the first 3 bytes
+        # The number of bytes per marker
+        self._nb_bytes = int(np.ceil(self._nb_samples / 4.0))
+
+        # Checking the file is valid by looking at the first 3 bytes and the
+        # last entry (correct size)
         with open(self.bed_filename, "rb") as bed_file:
             # Checking that the first two bytes are OK
             if (ord(bed_file.read(1)) != 108) or (ord(bed_file.read(1)) != 27):
@@ -297,8 +301,14 @@ class PyPlink(object):
                 raise ValueError("not in SNP-major format (please recode): "
                                  "{}".format(self.bed_filename))
 
-        # The number of bytes per marker
-        self._nb_bytes = int(np.ceil(self._nb_samples / 4.0))
+            # Checking the last entry
+            seek_position = self._get_seek_position(self._bim.iloc[-1, :].i)
+            bed_file.seek(seek_position)
+            geno = self._geno_values[
+                np.fromstring(bed_file.read(self._nb_bytes), dtype=np.uint8)
+            ].flatten(order="C")[:self._nb_samples]
+            if geno.shape[0] != self._nb_samples:
+                raise ValueError("invalid number of entries: corrupted BED?")
 
         # Opening the file for the rest of the operations (reading 3 bytes)
         self._bed = open(self.bed_filename, "rb")
