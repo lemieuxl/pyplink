@@ -125,7 +125,7 @@ class PyPlink(object):
             self._nb_values = None
 
             # Opening the output BED file
-            self._bed_file = open(self.bed_filename, "wb")
+            self._bed = open(self.bed_filename, "wb")
             self._write_bed_header()
 
         else:
@@ -162,35 +162,42 @@ class PyPlink(object):
 
     def close(self):
         """Closes the BED file if required."""
-        if self._mode == "w":
-            # Closing the BED file
-            self._bed_file.close()
+        # Closing the BED file
+        self._bed.close()
 
     def next(self):
         """The next function."""
         if self._mode != "r":
             raise UnsupportedOperation("not available in 'w' mode")
 
-        if self._n < self._nb_markers:
-            self._n += 1
-
-            # We want to return information about the marker and the genotypes
-            geno = self._geno_values[self._bed[self._n - 1]].flatten(order="C")
-            return self._markers[self._n - 1], geno[:self._nb_samples]
-        else:
+        self._n += 1
+        if self._n > self._nb_markers:
             raise StopIteration()
+
+        return self._markers[self._n - 1], self._read_current_marker()
+
+    def _read_current_marker(self):
+        """Reads the current marker and returns its genotypes."""
+        return self._geno_values[
+            np.fromstring(self._bed.read(self._nb_bytes), dtype=np.uint8)
+        ].flatten(order="C")[:self._nb_samples]
 
     def seek(self, n):
         """Gets to a certain position in the BED file when iterating."""
         if self._mode != "r":
             raise UnsupportedOperation("not available in 'w' mode")
 
-        if 0 <= n < len(self._bed):
+        if 0 <= n < self._nb_markers:
             self._n = n
+            self._bed.seek(self._get_seek_position(n))
 
         else:
             # Invalid seek value
             raise ValueError("invalid position in BED: {}".format(n))
+
+    def _get_seek_position(self, n):
+        """Gets the seek position in the file (including special bytes)."""
+        return 3 + self._nb_bytes * n
 
     def _read_bim(self):
         """Reads the BIM file."""
@@ -204,7 +211,7 @@ class PyPlink(object):
         bim["a2"] = bim["a2"].astype(str)
 
         bim = bim.set_index("snp")
-        bim["i"] = range(len(bim))
+        bim["i"] = range(bim.shape[0])
         bim[2] = bim.a1 * 2           # Original '0'
         bim[1] = bim.a1 + bim.a2      # Original '2'
         bim[0] = bim.a2 * 2           # Original '3'
@@ -219,7 +226,7 @@ class PyPlink(object):
 
         # Saving the data in the object
         self._bim = bim[["chrom", "pos", "cm", "a1", "a2", "i"]]
-        self._nb_markers = len(self._bim)
+        self._nb_markers = self._bim.shape[0]
         self._markers = np.array(list(self._bim.index))
 
     def get_bim(self):
@@ -256,7 +263,7 @@ class PyPlink(object):
 
         # Saving the data in the object
         self._fam = fam
-        self._nb_samples = len(self._fam)
+        self._nb_samples = self._fam.shape[0]
 
     def get_fam(self):
         """Returns the FAM file."""
@@ -278,7 +285,7 @@ class PyPlink(object):
         if (self._bim is None) or (self._fam is None):
             raise RuntimeError("no BIM or FAM file were read")
 
-        data = None
+        # Checking the file is valid by looking at the first 3 bytes
         with open(self.bed_filename, "rb") as bed_file:
             # Checking that the first two bytes are OK
             if (ord(bed_file.read(1)) != 108) or (ord(bed_file.read(1)) != 27):
@@ -290,45 +297,41 @@ class PyPlink(object):
                 raise ValueError("not in SNP-major format (please recode): "
                                  "{}".format(self.bed_filename))
 
-            # The number of bytes per marker
-            nb_bytes = int(np.ceil(self._nb_samples / 4.0))
+        # The number of bytes per marker
+        self._nb_bytes = int(np.ceil(self._nb_samples / 4.0))
 
-            # Reading the data
-            data = np.fromfile(bed_file, dtype=np.uint8)
-
-            # Checking the data
-            if data.shape[0] != (self._nb_markers * nb_bytes):
-                raise ValueError("invalid number of entries: "
-                                 "{}".format(self.bed_filename))
-            data.shape = (self._nb_markers, nb_bytes)
-
-        # Saving the data in the object
-        self._bed = data
+        # Opening the file for the rest of the operations (reading 3 bytes)
+        self._bed = open(self.bed_filename, "rb")
+        self._bed.read(3)
 
     def _write_bed_header(self):
         """Writes the BED first 3 bytes."""
         # Writing the first three bytes
         final_byte = 1 if self._bed_format == "SNP-major" else 0
-        self._bed_file.write(bytearray((108, 27, final_byte)))
+        self._bed.write(bytearray((108, 27, final_byte)))
 
     def iter_geno(self):
-        """Iterates over genotypes."""
+        """Iterates over genotypes from the beginning."""
         if self._mode != "r":
             raise UnsupportedOperation("not available in 'w' mode")
 
-        for i in range(len(self._bed)):
-            geno = self._geno_values[self._bed[i]].flatten(order="C")
-            yield self._markers[i], geno[:self._nb_samples]
+        # Seeking back at the beginning of the file
+        self.seek(0)
+
+        # Return itself (the generator)
+        return self
 
     def iter_acgt_geno(self):
         """Iterates over genotypes (ACGT format)."""
         if self._mode != "r":
             raise UnsupportedOperation("not available in 'w' mode")
 
-        for i in range(len(self._bed)):
-            geno = self._geno_values[self._bed[i]].flatten(order="C")
-            yield (self._markers[i],
-                   self._allele_encoding[i][geno[:self._nb_samples]])
+        # Seeking back at the beginning of the file
+        self.seek(0)
+
+        # Need to iterate over itself, and modify the actual genotypes
+        for i, (marker, geno) in enumerate(self):
+            yield marker, self._allele_encoding[i][geno]
 
     def iter_geno_marker(self, markers):
         """Iterates over genotypes for given markers."""
@@ -350,9 +353,12 @@ class PyPlink(object):
         required_markers = self._bim.loc[markers, :]
 
         # Then, we iterate
-        for snp, i in required_markers.i.iteritems():
-            geno = self._geno_values[self._bed[i]].flatten(order="C")
-            yield snp, geno[:self._nb_samples]
+        for snp, seek_position in required_markers.i.iteritems():
+            # Seeking to the correct position
+            self.seek(seek_position)
+
+            # Getting the value
+            yield snp, self._read_current_marker()
 
     def get_geno_marker(self, marker):
         """Gets the genotypes for a given marker."""
@@ -363,11 +369,11 @@ class PyPlink(object):
         if marker not in set(self._bim.index):
             raise ValueError("{}: marker not in BIM".format(marker))
 
-        # Getting all the genotypes
-        i = self._bim.loc[marker, "i"]
-        geno = self._geno_values[self._bed[i]].flatten(order="C")
+        # Seeking to the correct position
+        seek_position = self._bim.loc[marker, "i"]
+        self.seek(seek_position)
 
-        return geno[:self._nb_samples]
+        return self._read_current_marker()
 
     def iter_acgt_geno_marker(self, markers):
         """Iterates over genotypes for given markers (ACGT format)."""
@@ -389,9 +395,13 @@ class PyPlink(object):
         required_markers = self._bim.loc[markers, :]
 
         # Then, we iterate
-        for snp, i in required_markers.i.iteritems():
-            geno = self._geno_values[self._bed[i]].flatten(order="C")
-            yield snp, self._allele_encoding[i][geno[:self._nb_samples]]
+        for snp, seek_position in required_markers.i.iteritems():
+            # Seeking to the correct position
+            self.seek(seek_position)
+
+            # Getting the genotype and converting to ACGT
+            geno = self._read_current_marker()
+            yield snp, self._allele_encoding[seek_position][geno]
 
     def get_acgt_geno_marker(self, marker):
         """Gets the genotypes for a given marker (ACGT format)."""
@@ -402,11 +412,14 @@ class PyPlink(object):
         if marker not in set(self._bim.index):
             raise ValueError("{}: marker not in BIM".format(marker))
 
-        # Getting all the genotypes
-        i = self._bim.loc[marker, "i"]
-        geno = self._geno_values[self._bed[i]].flatten(order="C")
+        # Seeking to the correct position
+        seek_position = self._bim.loc[marker, "i"]
+        self.seek(seek_position)
 
-        return self._allele_encoding[i][geno[:self._nb_samples]]
+        # Getting the genotypes and converting them to ACGT
+        geno = self._read_current_marker()
+
+        return self._allele_encoding[seek_position][geno]
 
     def write_marker(self, genotypes):
         """Deprecated function."""
@@ -434,7 +447,7 @@ class PyPlink(object):
             g[0] | (g[1] << 2) | (g[2] << 4) | (g[3] << 6) for g in
             self._grouper((_byte_recode[geno] for geno in genotypes), 4)
         ]
-        self._bed_file.write(bytearray(byte_array))
+        self._bed.write(bytearray(byte_array))
 
     @staticmethod
     def _grouper(iterable, n, fillvalue=0):
