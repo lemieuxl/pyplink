@@ -364,21 +364,6 @@ class PyPlink(object):
             # Getting the value
             yield snp, self._read_current_marker()
 
-    def get_geno_marker(self, marker):
-        """Gets the genotypes for a given marker."""
-        if self._mode != "r":
-            raise UnsupportedOperation("not available in 'w' mode")
-
-        # Check if the marker exists
-        if marker not in set(self._bim.index):
-            raise ValueError("{}: marker not in BIM".format(marker))
-
-        # Seeking to the correct position
-        seek_position = self._bim.loc[marker, "i"]
-        self.seek(seek_position)
-
-        return self._read_current_marker()
-
     def iter_acgt_geno_marker(self, markers):
         """Iterates over genotypes for given markers (ACGT format)."""
         if self._mode != "r":
@@ -406,6 +391,21 @@ class PyPlink(object):
             # Getting the genotype and converting to ACGT
             geno = self._read_current_marker()
             yield snp, self._allele_encoding[seek_position][geno]
+
+    def get_geno_marker(self, marker):
+        """Gets the genotypes for a given marker."""
+        if self._mode != "r":
+            raise UnsupportedOperation("not available in 'w' mode")
+
+        # Check if the marker exists
+        if marker not in set(self._bim.index):
+            raise ValueError("{}: marker not in BIM".format(marker))
+
+        # Seeking to the correct position
+        seek_position = self._bim.loc[marker, "i"]
+        self.seek(seek_position)
+
+        return self._read_current_marker()
 
     def get_acgt_geno_marker(self, marker):
         """Gets the genotypes for a given marker (ACGT format)."""
