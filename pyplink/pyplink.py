@@ -337,7 +337,7 @@ class PyPlink(object):
         for i, (marker, geno) in enumerate(self.iter_geno()):
             yield marker, self._allele_encoding[i][geno]
 
-    def iter_geno_marker(self, markers):
+    def iter_geno_marker(self, markers, return_seek=False):
         """Iterates over genotypes for given markers."""
         if self._mode != "r":
             raise UnsupportedOperation("not available in 'w' mode")
@@ -361,20 +361,20 @@ class PyPlink(object):
             # Seeking to the correct position
             self.seek(seek_position)
 
-            # Setting the current SNP position
-            self._curr_snp_position = seek_position
-
             # Getting the value
-            yield snp, self._read_current_marker()
+            if return_seek:
+                yield snp, self._read_current_marker(), seek_position
+            else:
+                yield snp, self._read_current_marker()
 
     def iter_acgt_geno_marker(self, markers):
         """Iterates over genotypes for given markers (ACGT format)."""
         # We iterate over the markers
-        for snp, geno in self.iter_geno_marker(markers):
+        for snp, geno, s in self.iter_geno_marker(markers, return_seek=True):
             # Getting the SNP position and converting to ACGT
-            yield snp, self._allele_encoding[self._curr_snp_position][geno]
+            yield snp, self._allele_encoding[s][geno]
 
-    def get_geno_marker(self, marker):
+    def get_geno_marker(self, marker, return_seek=False):
         """Gets the genotypes for a given marker."""
         if self._mode != "r":
             raise UnsupportedOperation("not available in 'w' mode")
@@ -387,18 +387,17 @@ class PyPlink(object):
         seek_position = self._bim.loc[marker, "i"]
         self.seek(seek_position)
 
-        # Setting the current SNP position
-        self._curr_snp_position = seek_position
-
+        if return_seek:
+            return self._read_current_marker(), seek_position
         return self._read_current_marker()
 
     def get_acgt_geno_marker(self, marker):
         """Gets the genotypes for a given marker (ACGT format)."""
         # Getting the marker's genotypes
-        geno = self.get_geno_marker(marker)
+        geno, snp_position = self.get_geno_marker(marker, return_seek=True)
 
         # Returning the ACGT's format of the genotypes
-        return self._allele_encoding[self._curr_snp_position][geno]
+        return self._allele_encoding[snp_position][geno]
 
     def write_marker(self, genotypes):
         """Deprecated function."""
