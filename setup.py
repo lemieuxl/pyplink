@@ -15,7 +15,7 @@ from setuptools import setup
 
 
 MAJOR = 1
-MINOR = 2
+MINOR = 3
 MICRO = 0
 VERSION = "{}.{}.{}".format(MAJOR, MINOR, MICRO)
 
@@ -65,9 +65,11 @@ def setup_package():
                      "Programming Language :: Python :: 3",
                      "Programming Language :: Python :: 3.3",
                      "Programming Language :: Python :: 3.4",
+                     "Programming Language :: Python :: 3.5",
+                     "Programming Language :: Python :: 3.6",
                      "License :: OSI Approved :: MIT License",
                      "Topic :: Scientific/Engineering :: Bio-Informatics"],
-        keywords="bioinformatics format plink binary",
+        keywords="bioinformatics format Plink binary",
     )
 
     return

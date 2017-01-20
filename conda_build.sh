@@ -8,8 +8,8 @@ pushd skeleton
 conda skeleton pypi pyplink
 
 # The different python versions and platforms
-python_versions="2.7 3.3 3.4 3.5"
-platforms="linux-32 linux-64 osx-64 win-32 win-64"
+python_versions="2.7 3.3 3.4 3.5 3.6"
+platforms="all"
 
 # Building
 for python_version in $python_versions

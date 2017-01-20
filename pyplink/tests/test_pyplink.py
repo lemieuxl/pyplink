@@ -98,7 +98,6 @@ def get_plink(tmp_dir):
             return None, "Plink's URL is not available"
 
         # Unzipping Plink
-        plink_dir = os.path.join(tmp_dir, )
         with zipfile.ZipFile(zip_path, "r") as z:
             z.extractall(tmp_dir)
         plink_path = os.path.join(tmp_dir, os.path.splitext(filename)[0],
@@ -177,15 +176,15 @@ class TestPyPlink(unittest.TestCase):
         # Cleaning the temporary directory
         shutil.rmtree(cls.tmp_dir)
 
+    def tearDown(self):
+        # Closing the PyPlink object
+        self.pedfile.close()
+
     def test_pyplink_object_integrity(self):
         """Checks the integrity of the PyPlink object."""
         # Checking the name of the BED file
         self.assertTrue(hasattr(self.pedfile, "bed_filename"))
         self.assertEqual(self.bed, self.pedfile.bed_filename)
-
-        # Checking the BED object
-        self.assertTrue(hasattr(self.pedfile, "_bed"))
-        self.assertTrue(isinstance(self.pedfile._bed, np.ndarray))
 
         # Checking the name of the BIM file
         self.assertTrue(hasattr(self.pedfile, "bim_filename"))
@@ -205,24 +204,21 @@ class TestPyPlink(unittest.TestCase):
 
     def test_pyplink_object_error(self):
         """Checks what happens when we play with the PyPlink object."""
-        # Creating a new object
-        data = PyPlink(self.prefix)
-
         # Changing the BIM to None
-        ori = data._bim
-        data._bim = None
+        ori = self.pedfile._bim
+        self.pedfile._bim = None
         with self.assertRaises(RuntimeError) as cm:
-            data._read_bed()
+            self.pedfile._read_bed()
         self.assertEqual("no BIM or FAM file were read", str(cm.exception))
-        data._bim = ori
+        self.pedfile._bim = ori
 
         # Changing the FAM to None
-        ori = data._fam
-        data._fam = None
+        ori = self.pedfile._fam
+        self.pedfile._fam = None
         with self.assertRaises(RuntimeError) as cm:
-            data._read_bed()
+            self.pedfile._read_bed()
         self.assertEqual("no BIM or FAM file were read", str(cm.exception))
-        data._fam = ori
+        self.pedfile._fam = ori
 
     def test_pyplink_bad_bed(self):
         """Checks what happens when we read a bad BED file."""
@@ -235,8 +231,8 @@ class TestPyPlink(unittest.TestCase):
             o_file.write(i_file.read())
 
         # Copying the BIM file
-        new_fam = new_prefix + ".bim"
-        with open(new_fam, "w") as o_file, open(self.fam, "r") as i_file:
+        new_bim = new_prefix + ".bim"
+        with open(new_bim, "w") as o_file, open(self.bim, "r") as i_file:
             o_file.write(i_file.read())
 
         # Creating a new BED file with invalid number of bytes
@@ -247,7 +243,7 @@ class TestPyPlink(unittest.TestCase):
         # This should raise an exception
         with self.assertRaises(ValueError) as cm:
             PyPlink(new_prefix)
-        self.assertEqual("invalid number of entries: {}".format(new_bed),
+        self.assertEqual("invalid number of entries: corrupted BED?",
                          str(cm.exception))
 
         # Creating a new BED file with invalid first byte
@@ -290,7 +286,7 @@ class TestPyPlink(unittest.TestCase):
         # Creating dummy BED/BIM/FAM files
         prefix = os.path.join(self.tmp_dir, "test_missing")
         for extension in (".bed", ".bim", ".fam"):
-            with open(prefix + extension, "w") as o_file:
+            with open(prefix + extension, "w"):
                 pass
 
         # Removing the files (one by one) and checking the exception is raised
@@ -300,7 +296,7 @@ class TestPyPlink(unittest.TestCase):
                 PyPlink(prefix)
             self.assertEqual("No such file: '{}'".format(prefix + extension),
                              str(cm.exception))
-            with open(prefix + extension, "w") as o_file:
+            with open(prefix + extension, "w"):
                 pass
 
     def test_get_nb_markers(self):
@@ -447,7 +443,7 @@ class TestPyPlink(unittest.TestCase):
         )
         for (e_marker, e_geno), (marker, geno) in zipped:
             self.assertEqual(e_marker, marker)
-            self.assertTrue((e_geno == geno).all())
+            np.testing.assert_array_equal(e_geno, geno)
 
         # The generator should be empty
         remaining = [(marker, geno) for marker, geno in self.pedfile]
@@ -467,7 +463,7 @@ class TestPyPlink(unittest.TestCase):
 
         # Comparing
         self.assertEqual(self.markers[0], marker)
-        self.assertTrue((self.genotypes[0] == genotypes).all())
+        np.testing.assert_array_equal(self.genotypes[0], genotypes)
 
     def test_next_w_mode(self):
         """Tests that an exception is raised when calling next in w mode."""
@@ -494,7 +490,7 @@ class TestPyPlink(unittest.TestCase):
         self.pedfile.seek(1)
         for (e_marker, e_geno), (marker, geno) in zipped:
             self.assertEqual(e_marker, marker)
-            self.assertTrue((e_geno == geno).all())
+            np.testing.assert_array_equal(e_geno, geno)
 
         # Seeking at the fourth position
         zipped = zip(
@@ -504,7 +500,17 @@ class TestPyPlink(unittest.TestCase):
         self.pedfile.seek(3)
         for (e_marker, e_geno), (marker, geno) in zipped:
             self.assertEqual(e_marker, marker)
-            self.assertTrue((e_geno == geno).all())
+            np.testing.assert_array_equal(e_geno, geno)
+
+        # Seeking at the tenth position
+        zipped = zip(
+            [i for i in zip(self.markers[9:], self.genotypes[9:])],
+            self.pedfile,
+        )
+        self.pedfile.seek(9)
+        for (e_marker, e_geno), (marker, geno) in zipped:
+            self.assertEqual(e_marker, marker)
+            np.testing.assert_array_equal(e_geno, geno)
 
         # Seeking at an invalid position
         with self.assertRaises(ValueError) as cm:
@@ -515,6 +521,11 @@ class TestPyPlink(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
             self.pedfile.seek(100)
         self.assertEqual("invalid position in BED: 100", str(cm.exception))
+
+        # Seeking at an invalid position
+        with self.assertRaises(ValueError) as cm:
+            self.pedfile.seek(10)
+        self.assertEqual("invalid position in BED: 10", str(cm.exception))
 
     def test_seek_w_mode(self):
         """Tests that an exception is raised if in write mode."""
@@ -532,7 +543,7 @@ class TestPyPlink(unittest.TestCase):
         )
         for (e_marker, e_geno), (marker, geno) in zipped:
             self.assertEqual(e_marker, marker)
-            self.assertTrue((e_geno == geno).all())
+            np.testing.assert_array_equal(e_geno, geno)
 
     def test_iter_geno_w_mode(self):
         """Tests that an exception is raised if in write mode."""
@@ -550,7 +561,7 @@ class TestPyPlink(unittest.TestCase):
         )
         for (e_marker, e_geno), (marker, geno) in zipped:
             self.assertEqual(e_marker, marker)
-            self.assertTrue((e_geno == geno).all())
+            np.testing.assert_array_equal(e_geno, geno)
 
     def test_iter_acgt_geno_w_mode(self):
         """Tests that an exception is raised if in write mode."""
@@ -576,7 +587,7 @@ class TestPyPlink(unittest.TestCase):
         )
         for (e_marker, e_geno), (marker, geno) in zipped:
             self.assertEqual(e_marker, marker)
-            self.assertTrue((e_geno == geno).all())
+            np.testing.assert_array_equal(e_geno, geno)
 
         # Testing a single marker
         index = random.randint(0, len(self.markers) - 1)
@@ -584,7 +595,7 @@ class TestPyPlink(unittest.TestCase):
         e_geno = self.genotypes[index]
         for marker, geno in self.pedfile.iter_geno_marker(e_marker):
             self.assertEqual(e_marker, marker)
-            self.assertTrue((e_geno == geno).all())
+            np.testing.assert_array_equal(e_geno, geno)
 
         # Adding a marker that doesn't exist
         markers.extend(["unknown_1", "unknown_2"])
@@ -617,7 +628,7 @@ class TestPyPlink(unittest.TestCase):
         )
         for (e_marker, e_geno), (marker, geno) in zipped:
             self.assertEqual(e_marker, marker)
-            self.assertTrue((e_geno == geno).all())
+            np.testing.assert_array_equal(e_geno, geno)
 
         # Testing a single marker
         index = random.randint(0, len(self.markers) - 1)
@@ -625,7 +636,7 @@ class TestPyPlink(unittest.TestCase):
         e_geno = self.acgt_genotypes[index]
         for marker, geno in self.pedfile.iter_acgt_geno_marker(e_marker):
             self.assertEqual(e_marker, marker)
-            self.assertTrue((e_geno == geno).all())
+            np.testing.assert_array_equal(e_geno, geno)
 
         # Adding a marker that doesn't exist
         markers.extend(["unknown_3", "unknown_4"])
@@ -670,14 +681,10 @@ class TestPyPlink(unittest.TestCase):
         e_repr = 'PyPlink(mode="w")'
 
         # Creating the dummy PyPlink object
-        pedfile = PyPlink(os.path.join(self.tmp_dir, "test_repr"), "w")
-
-        # Comparing the expected with the observed representation
-        o_repr = str(pedfile)
-        self.assertEqual(e_repr, o_repr)
-
-        # Closing the file
-        pedfile.close()
+        with PyPlink(os.path.join(self.tmp_dir, "test_repr"), "w") as pedfile:
+            # Comparing the expected with the observed representation
+            o_repr = str(pedfile)
+            self.assertEqual(e_repr, o_repr)
 
     def test_get_geno_marker(self):
         """Tests the 'get_geno_marker' function."""
@@ -688,7 +695,7 @@ class TestPyPlink(unittest.TestCase):
 
         # Getting the genotype
         o_geno = self.pedfile.get_geno_marker(marker)
-        self.assertTrue((o_geno == e_geno).all())
+        np.testing.assert_array_equal(o_geno, e_geno)
 
         # Asking for an unknown marker should raise an ValueError
         with self.assertRaises(ValueError) as cm:
@@ -703,7 +710,7 @@ class TestPyPlink(unittest.TestCase):
         with self.assertRaises(UnsupportedOperation) as cm:
             # Creating the dummy PyPlink object
             with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
-                genotypes = p.get_geno_marker("M1")
+                p.get_geno_marker("M1")
         self.assertEqual("not available in 'w' mode", str(cm.exception))
 
     def test_get_iter_w_mode(self):
@@ -711,7 +718,7 @@ class TestPyPlink(unittest.TestCase):
         with self.assertRaises(UnsupportedOperation) as cm:
             # Creating the dummy PyPlink object
             with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
-                genotypes = iter(p)
+                iter(p)
         self.assertEqual("not available in 'w' mode", str(cm.exception))
 
     def test_get_acgt_geno_marker(self):
@@ -723,7 +730,7 @@ class TestPyPlink(unittest.TestCase):
 
         # Getting the genotype
         o_geno = self.pedfile.get_acgt_geno_marker(marker)
-        self.assertTrue((o_geno == e_geno).all())
+        np.testing.assert_array_equal(o_geno, e_geno)
 
         # Asking for an unknown marker should raise an ValueError
         with self.assertRaises(ValueError) as cm:
@@ -735,7 +742,7 @@ class TestPyPlink(unittest.TestCase):
         with self.assertRaises(UnsupportedOperation) as cm:
             # Creating the dummy PyPlink object
             with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
-                genotypes = p.get_acgt_geno_marker("M1")
+                p.get_acgt_geno_marker("M1")
         self.assertEqual("not available in 'w' mode", str(cm.exception))
 
     def test_get_context_read_mode(self):
@@ -746,7 +753,7 @@ class TestPyPlink(unittest.TestCase):
     def test_invalid_mode(self):
         """Tests invalid mode when PyPlink as context manager."""
         with self.assertRaises(ValueError) as cm:
-            genotypes = PyPlink(self.prefix, "u")
+            PyPlink(self.prefix, "u")
         self.assertEqual("invalid mode: 'u'", str(cm.exception))
 
     def test_write_binary(self):
@@ -782,10 +789,10 @@ class TestPyPlink(unittest.TestCase):
                       file=o_file)
 
         # Reading the written binary file
-        pedfile = PyPlink(test_prefix)
-        for i, (marker, genotypes) in enumerate(pedfile):
-            self.assertEqual("m{}".format(i+1), marker)
-            self.assertTrue((expected_genotypes[i] == genotypes).all())
+        with PyPlink(test_prefix) as pedfile:
+            for i, (marker, genotypes) in enumerate(pedfile):
+                self.assertEqual("m{}".format(i+1), marker)
+                np.testing.assert_array_equal(expected_genotypes[i], genotypes)
 
     def test_write_binary_error(self):
         """Tests writing a binary file, with different number of sample."""
