@@ -4,7 +4,11 @@ python:
   - "3.3"
   - "3.4"
   - "3.5"
+  - "3.6"
 install:
+  - pip install six
+  - pip install numpy
+  - pip install pandas
   - pip install coveralls
 script:
   - coverage run setup.py test
