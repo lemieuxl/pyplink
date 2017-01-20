@@ -361,6 +361,9 @@ class PyPlink(object):
             # Seeking to the correct position
             self.seek(seek_position)
 
+            # Setting the current SNP position
+            self._curr_snp_position = seek_position
+
             # Getting the value
             yield snp, self._read_current_marker()
 
@@ -369,8 +372,7 @@ class PyPlink(object):
         # We iterate over the markers
         for snp, geno in self.iter_geno_marker(markers):
             # Getting the SNP position and converting to ACGT
-            snp_position = self._bim.loc[snp, "i"]
-            yield snp, self._allele_encoding[snp_position][geno]
+            yield snp, self._allele_encoding[self._curr_snp_position][geno]
 
     def get_geno_marker(self, marker):
         """Gets the genotypes for a given marker."""
@@ -385,6 +387,9 @@ class PyPlink(object):
         seek_position = self._bim.loc[marker, "i"]
         self.seek(seek_position)
 
+        # Setting the current SNP position
+        self._curr_snp_position = seek_position
+
         return self._read_current_marker()
 
     def get_acgt_geno_marker(self, marker):
@@ -392,11 +397,8 @@ class PyPlink(object):
         # Getting the marker's genotypes
         geno = self.get_geno_marker(marker)
 
-        # Getting the marker's position
-        snp_position = self._bim.loc[marker, "i"]
-
         # Returning the ACGT's format of the genotypes
-        return self._allele_encoding[snp_position][geno]
+        return self._allele_encoding[self._curr_snp_position][geno]
 
     def write_marker(self, genotypes):
         """Deprecated function."""
