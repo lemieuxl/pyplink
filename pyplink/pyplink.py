@@ -366,31 +366,11 @@ class PyPlink(object):
 
     def iter_acgt_geno_marker(self, markers):
         """Iterates over genotypes for given markers (ACGT format)."""
-        if self._mode != "r":
-            raise UnsupportedOperation("not available in 'w' mode")
-
-        # If string, we change to list
-        if isinstance(markers, str):
-            markers = [markers]
-
-        # Checking the list of required markers
-        unknown_markers = set(markers) - set(self._bim.index)
-        if len(unknown_markers) > 0:
-            raise ValueError("{}: marker not in BIM".format(
-                sorted(unknown_markers)
-            ))
-
-        # Getting the required markers
-        required_markers = self._bim.loc[markers, :]
-
-        # Then, we iterate
-        for snp, seek_position in required_markers.i.iteritems():
-            # Seeking to the correct position
-            self.seek(seek_position)
-
-            # Getting the genotype and converting to ACGT
-            geno = self._read_current_marker()
-            yield snp, self._allele_encoding[seek_position][geno]
+        # We iterate over the markers
+        for snp, geno in self.iter_geno_marker(markers):
+            # Getting the SNP position and converting to ACGT
+            snp_position = self._bim.loc[snp, "i"]
+            yield snp, self._allele_encoding[snp_position][geno]
 
     def get_geno_marker(self, marker):
         """Gets the genotypes for a given marker."""
