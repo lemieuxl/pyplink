@@ -601,8 +601,7 @@ class TestPyPlink(unittest.TestCase):
         markers.extend(["unknown_1", "unknown_2"])
         with self.assertRaises(ValueError) as cm:
             [i for i in self.pedfile.iter_geno_marker(markers)]
-        self.assertEqual("['unknown_1', 'unknown_2']: marker not in BIM",
-                         str(cm.exception))
+        self.assertEqual("unknown_1: marker not in BIM", str(cm.exception))
 
     def test_iter_geno_marker_w_mode(self):
         """Tests that an exception is raised if in write mode."""
@@ -642,8 +641,7 @@ class TestPyPlink(unittest.TestCase):
         markers.extend(["unknown_3", "unknown_4"])
         with self.assertRaises(ValueError) as cm:
             [i for i in self.pedfile.iter_acgt_geno_marker(markers)]
-        self.assertEqual("['unknown_3', 'unknown_4']: marker not in BIM",
-                         str(cm.exception))
+        self.assertEqual("unknown_3: marker not in BIM", str(cm.exception))
 
     def test_iter_acgt_geno_marker_w_mode(self):
         """Tests that an exception is raised if in write mode."""
