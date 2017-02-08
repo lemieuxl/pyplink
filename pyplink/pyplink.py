@@ -227,7 +227,7 @@ class PyPlink(object):
         # Saving the data in the object
         self._bim = bim[["chrom", "pos", "cm", "a1", "a2", "i"]]
         self._nb_markers = self._bim.shape[0]
-        self._markers = np.array(list(self._bim.index))
+        self._markers = self._bim.index.values
 
     def get_bim(self):
         """Returns the BIM file."""
@@ -346,26 +346,14 @@ class PyPlink(object):
         if isinstance(markers, str):
             markers = [markers]
 
-        # Checking the list of required markers
-        unknown_markers = set(markers) - set(self._bim.index)
-        if len(unknown_markers) > 0:
-            raise ValueError("{}: marker not in BIM".format(
-                sorted(unknown_markers)
-            ))
-
-        # Getting the required markers
-        required_markers = self._bim.loc[markers, :]
-
-        # Then, we iterate
-        for snp, seek_position in required_markers.i.iteritems():
-            # Seeking to the correct position
-            self.seek(seek_position)
-
-            # Getting the value
-            if return_seek:
-                yield snp, self._read_current_marker(), seek_position
-            else:
-                yield snp, self._read_current_marker()
+        # Iterating over all markers
+        if return_seek:
+            for marker in markers:
+                geno, seek = self.get_geno_marker(marker, return_seek=True)
+                yield marker, geno, seek
+        else:
+            for marker in markers:
+                yield marker, self.get_geno_marker(marker)
 
     def iter_acgt_geno_marker(self, markers):
         """Iterates over genotypes for given markers (ACGT format)."""
@@ -380,7 +368,7 @@ class PyPlink(object):
             raise UnsupportedOperation("not available in 'w' mode")
 
         # Check if the marker exists
-        if marker not in set(self._bim.index):
+        if marker not in self._bim.index:
             raise ValueError("{}: marker not in BIM".format(marker))
 
         # Seeking to the correct position
