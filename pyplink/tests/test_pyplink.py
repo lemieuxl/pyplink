@@ -26,6 +26,7 @@
 from __future__ import print_function
 
 import os
+import sys
 import stat
 import random
 import shutil
@@ -66,10 +67,11 @@ def get_plink(tmp_dir):
         plink_path += ".exe"
 
     if find_executable(plink_path) is None:
-        print("Downloading Plink")
+        print("Downloading Plink", file=sys.stderr)
 
         # The url for each platform
-        url = "http://pngu.mgh.harvard.edu/~purcell/plink/dist/{filename}"
+        url = ("http://statgen.org/wp-content/uploads/Softwares/"
+               "plink-1.0.7/{filename}")
 
         # Getting the name of the file
         filename = ""
