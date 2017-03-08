@@ -33,7 +33,6 @@ import shutil
 import zipfile
 import platform
 import unittest
-import warnings
 from tempfile import mkdtemp
 from io import UnsupportedOperation
 from distutils.spawn import find_executable
@@ -1052,15 +1051,3 @@ class TestPyPlink(unittest.TestCase):
         with self.assertRaises(UnsupportedOperation) as cm:
             self.pedfile.write_genotypes([0, 0, 0])
         self.assertEqual("not available in 'r' mode", str(cm.exception))
-
-    def test_write_marker_deprecation_warning(self):
-        """Tests that a deprecation warning is triggered."""
-        with warnings.catch_warnings(record=True) as w:
-            with PyPlink(os.path.join(self.tmp_dir, "test_warns"), "w") as p:
-                p.write_marker([0, 0, 0])
-            self.assertEqual(1, len(w))
-            self.assertTrue(issubclass(w[0].category, DeprecationWarning))
-            self.assertEqual(
-                "deprecated: use 'write_genotypes'",
-                str(w[0].message),
-            )

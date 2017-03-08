@@ -26,7 +26,6 @@
 
 
 import os
-import warnings
 from io import UnsupportedOperation
 
 try:
@@ -46,10 +45,6 @@ __license__ = "MIT"
 
 
 __all__ = ["PyPlink"]
-
-
-# Allowing for warnings
-warnings.simplefilter("once", DeprecationWarning)
 
 
 # The recoding values
@@ -217,7 +212,7 @@ class PyPlink(object):
         bim[0] = bim.a2 * 2           # Original '3'
         bim[-1] = "00"                # Original 1
 
-        # Testing something
+        # Decoding the allele
         allele_encoding = np.array(
             [bim[0], bim[1], bim[2], bim[-1]],
             dtype="U2",
@@ -386,11 +381,6 @@ class PyPlink(object):
 
         # Returning the ACGT's format of the genotypes
         return self._allele_encoding[snp_position][geno]
-
-    def write_marker(self, genotypes):
-        """Deprecated function."""
-        warnings.warn("deprecated: use 'write_genotypes'", DeprecationWarning)
-        self.write_genotypes(genotypes)
 
     def write_genotypes(self, genotypes):
         """Write genotypes to binary file."""
