@@ -331,17 +331,16 @@ class TestPyPlink(unittest.TestCase):
                 p.get_nb_samples()
         self.assertEqual("not available in 'w' mode", str(cm.exception))
 
-    # TODO: Change some chromosomes and cm just to be sure
     def test_get_bim(self):
         """Tests the 'get_bim' function."""
         # The original BIM file (with the 'i' column)
         ori_bim = self.pedfile._bim
 
         # The expected values
-        chromosomes = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        chromosomes = [1, 2, 3, 4, 4, 5, 6, 6, 6, 8]
         positions = [45162, 45257, 45413, 46844, 72434, 72515, 77689, 78032,
                      81468, 222077]
-        cms = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        cms = [0, 1, 1, 2, 2, 3, 4, 4, 5, 6]
         a1s = ["G", "C", "0", "A", "0", "0", "G", "0", "G", "A"]
         a2s = ["C", "T", "0", "T", "G", "C", "A", "T", "C", "G"]
 
@@ -1094,13 +1093,13 @@ class TestPyPlink(unittest.TestCase):
         self.assertTrue(pyplink_logger.warning.called)
 
         # Checking the BIM
-        chromosomes = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        chromosomes = [1, 2, 3, 4, 4, 5, 6, 6, 6, 8]
         markers = ["rs10399749", "rs2949420:dup1", "rs2949421", "rs2691310",
                    "rs4030303:dup1", "rs4030303:dup2", "rs4030303:dup3",
                    "rs940550:dup1", "rs940550:dup2", "rs2949420:dup2"]
         positions = [45162, 45257, 45413, 46844, 72434, 72515, 77689, 78032,
                      81468, 222077]
-        cms = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        cms = [0, 1, 1, 2, 2, 3, 4, 4, 5, 6]
         a1s = ["G", "C", "0", "A", "0", "0", "G", "0", "G", "A"]
         a2s = ["C", "T", "0", "T", "G", "C", "A", "T", "C", "G"]
 
