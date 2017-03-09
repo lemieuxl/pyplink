@@ -27,6 +27,7 @@
 
 import os
 import logging
+from itertools import repeat
 from io import UnsupportedOperation
 
 try:
@@ -206,16 +207,20 @@ class PyPlink(object):
                           names=["chrom", "snp", "cm", "pos", "a1", "a2"],
                           dtype=dict(snp=str, a1=str, a2=str))
 
-        bim = bim.set_index("snp")
-        bim["i"] = range(bim.shape[0])
-        bim[2] = bim.a1 * 2           # Original '0'
-        bim[1] = bim.a1 + bim.a2      # Original '2'
-        bim[0] = bim.a2 * 2           # Original '3'
-        bim[-1] = "00"                # Original 1
+        # Saving the index as integer
+        bim["i"] = bim.index
 
-        # Decoding the allele
+        # Checking for duplicated markers
+        bim = bim.set_index("snp")
+
+        # Encoding the allele
+        #   - The original 0 is the actual 2 (a1/a1)
+        #   - The original 2 is the actual 1 (a1/a2)
+        #   - The original 3 is the actual 0 (a2/a2)
+        #   - The original 1 is the actual -1 (no call)
         allele_encoding = np.array(
-            [bim[0], bim[1], bim[2], bim[-1]],
+            [bim.a2 * 2, bim.a1 + bim.a2, bim.a1 * 2,
+             list(repeat("00", bim.shape[0]))],
             dtype="U2",
         )
         self._allele_encoding = allele_encoding.T
