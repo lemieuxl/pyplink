@@ -28,6 +28,7 @@
 import os
 import logging
 from itertools import repeat
+from collections import Counter
 from io import UnsupportedOperation
 
 try:
@@ -211,7 +212,36 @@ class PyPlink(object):
         bim["i"] = bim.index
 
         # Checking for duplicated markers
-        bim = bim.set_index("snp")
+        try:
+            bim = bim.set_index("snp", verify_integrity=True)
+            self._has_duplicated = False
+
+        except ValueError as e:
+            # Setting this flag to true
+            self._has_duplicated = True
+
+            # Finding the duplicated markers
+            duplicated = bim.snp.duplicated(keep=False)
+            duplicated_markers = bim.loc[duplicated, "snp"]
+            duplicated_marker_counts = duplicated_markers.value_counts()
+            self._dup_markers = set(duplicated_marker_counts.index)
+
+            # Logging a warning
+            logger.warning("Duplicated markers found")
+            for marker, count in duplicated_marker_counts.iteritems():
+                logger.warning("  - {}: {:,d} times".format(marker, count))
+            logger.warning("Appending ':dupX' to the duplicated markers "
+                           "according to their location in the BIM file")
+
+            # Renaming the markers
+            counter = Counter()
+            for i, marker in duplicated_markers.iteritems():
+                counter[marker] += 1
+                new_name = "{}:dup{}".format(marker, counter[marker])
+                bim.loc[i, "snp"] = new_name
+
+            # Resetting the index
+            bim = bim.set_index("snp", verify_integrity=True)
 
         # Encoding the allele
         #   - The original 0 is the actual 2 (a1/a1)
@@ -242,6 +272,13 @@ class PyPlink(object):
             raise UnsupportedOperation("not available in 'w' mode")
 
         return self._nb_markers
+
+    def get_duplicated_markers(self):
+        """Returns the duplicated markers, if any."""
+        if self._has_duplicated:
+            return self._dup_markers
+        else:
+            return set()
 
     def _read_fam(self):
         """Reads the FAM file."""
@@ -297,7 +334,7 @@ class PyPlink(object):
                 raise ValueError("not in SNP-major format (please recode): "
                                  "{}".format(self.bed_filename))
 
-            # Checking the last entry
+            # Checking the last entry (for BED corruption)
             seek_position = self._get_seek_position(self._bim.iloc[-1, :].i)
             bed_file.seek(seek_position)
             geno = self._geno_values[
