@@ -26,6 +26,7 @@
 
 
 import os
+import logging
 from io import UnsupportedOperation
 
 try:
@@ -45,6 +46,10 @@ __license__ = "MIT"
 
 
 __all__ = ["PyPlink"]
+
+
+# The logger
+logger = logging.getLogger(__name__)
 
 
 # The recoding values
@@ -198,12 +203,8 @@ class PyPlink(object):
         """Reads the BIM file."""
         # Reading the BIM file and setting the values
         bim = pd.read_csv(self.bim_filename, delim_whitespace=True,
-                          names=["chrom", "snp", "cm", "pos", "a1", "a2"])
-
-        # The 'snp', 'a1' and 'a2' columns should always be strings
-        bim["snp"] = bim["snp"].astype(str)
-        bim["a1"] = bim["a1"].astype(str)
-        bim["a2"] = bim["a2"].astype(str)
+                          names=["chrom", "snp", "cm", "pos", "a1", "a2"],
+                          dtype=dict(snp=str, a1=str, a2=str))
 
         bim = bim.set_index("snp")
         bim["i"] = range(bim.shape[0])
@@ -243,14 +244,10 @@ class PyPlink(object):
         # Reading the FAM file and setting the values
         fam = pd.read_csv(self.fam_filename, delim_whitespace=True,
                           names=["fid", "iid", "father", "mother", "gender",
-                                 "status"])
+                                 "status"],
+                          dtype=dict(fid=str, iid=str, father=str, mother=str))
 
-        # The sample IDs should always be strings (more logical that way)
-        fam["fid"] = fam["fid"].astype(str)
-        fam["iid"] = fam["iid"].astype(str)
-        fam["father"] = fam["father"].astype(str)
-        fam["mother"] = fam["mother"].astype(str)
-
+        # Getting the byte and bit location of each samples
         fam["byte"] = [
             int(np.ceil((1 + 1) / 4.0)) - 1 for i in range(len(fam))
         ]
