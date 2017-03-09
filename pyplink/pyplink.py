@@ -175,7 +175,7 @@ class PyPlink(object):
         if self._n > self._nb_markers:
             raise StopIteration()
 
-        return self._markers[self._n - 1], self._read_current_marker()
+        return self._bim.index[self._n - 1], self._read_current_marker()
 
     def _read_current_marker(self):
         """Reads the current marker and returns its genotypes."""
@@ -228,7 +228,6 @@ class PyPlink(object):
         # Saving the data in the object
         self._bim = bim[["chrom", "pos", "cm", "a1", "a2", "i"]]
         self._nb_markers = self._bim.shape[0]
-        self._markers = self._bim.index.values
 
     def get_bim(self):
         """Returns the BIM file."""
