@@ -1,5 +1,3 @@
-"""A module to read Plink's binary files."""
-
 # This file is part of pyplink.
 #
 # The MIT License (MIT)
@@ -25,35 +23,14 @@
 # THE SOFTWARE.
 
 
-from .pyplink import PyPlink
+import unittest
 
-try:
-    from .version import pyplink_version as __version__
-except ImportError:
-    __version__ = None
+from . import test_suite
 
 
 __author__ = "Louis-Philippe Lemieux Perreault"
 __copyright__ = "Copyright 2014 Louis-Philippe Lemieux Perreault"
-__credits__ = ["Louis-Philippe Lemieux Perreault"]
 __license__ = "MIT"
-__maintainer__ = "Louis-Philippe Lemieux Perreault"
-__email__ = "louis-philippe.lemieux.perreault@statgen.org"
-__status__ = "Development"
 
 
-def test(verbosity=1):  # pragma: no cover
-    """Executes all the tests for pyplink.
-
-    Args:
-        verbosity (int): The verbosity level for :py:mod:`unittest`.
-
-    Just set ``verbosity`` to an integer higher than ``1`` to have more
-    information about the tests.
-
-    """
-    import unittest
-    from .tests import test_suite
-
-    # Testing
-    unittest.TextTestRunner(verbosity=verbosity).run(test_suite)
+unittest.TextTestRunner(verbosity=1).run(test_suite)

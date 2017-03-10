@@ -5,7 +5,9 @@
 
 # pyplink - Module to process Plink's binary files
 
-`PyPlink` is a Python module to read and write Plink's binary files.
+`PyPlink` is a Python module to read and write Plink's binary files. Short
+documentation available at
+[https://lemieuxl.github.io/pyplink/](https://lemieuxl.github.io/pyplink/).
 
 
 ## Dependencies
@@ -67,12 +69,11 @@ conda update pyplink -c http://statgen.org/wp-content/uploads/Softwares/pyplink
 
 To test the module, just perform the following command:
 
-```python
->>> import pyplink
->>> pyplink.test()
+```console
+$ python -m pyplink.tests
 .............................................
 ----------------------------------------------------------------------
-Ran 45 tests in 0.480s
+Ran 45 tests in 0.334s
 
 OK
 ```

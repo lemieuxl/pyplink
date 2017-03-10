@@ -33,7 +33,6 @@ import shutil
 import zipfile
 import platform
 import unittest
-import warnings
 from tempfile import mkdtemp
 from io import UnsupportedOperation
 from distutils.spawn import find_executable
@@ -49,6 +48,11 @@ try:
 except ImportError:
     from urllib import urlretrieve
 
+try:
+    from unittest import mock
+except ImportError:
+    import mock
+
 from pkg_resources import resource_filename
 
 import numpy as np
@@ -56,7 +60,7 @@ import pandas as pd
 
 from six.moves import range
 
-from ..pyplink import PyPlink
+from .. import pyplink
 
 
 def get_plink(tmp_dir):
@@ -171,7 +175,7 @@ class TestPyPlink(unittest.TestCase):
 
     def setUp(self):
         # Reading the plink binary file
-        self.pedfile = PyPlink(self.prefix)
+        self.pedfile = pyplink.PyPlink(self.prefix)
 
     @classmethod
     def tearDownClass(cls):
@@ -244,7 +248,7 @@ class TestPyPlink(unittest.TestCase):
 
         # This should raise an exception
         with self.assertRaises(ValueError) as cm:
-            PyPlink(new_prefix)
+            pyplink.PyPlink(new_prefix)
         self.assertEqual("invalid number of entries: corrupted BED?",
                          str(cm.exception))
 
@@ -255,7 +259,7 @@ class TestPyPlink(unittest.TestCase):
 
         # This should raise an exception
         with self.assertRaises(ValueError) as cm:
-            PyPlink(new_prefix)
+            pyplink.PyPlink(new_prefix)
         self.assertEqual("not a valid BED file: {}".format(new_bed),
                          str(cm.exception))
 
@@ -266,7 +270,7 @@ class TestPyPlink(unittest.TestCase):
 
         # This should raise an exception
         with self.assertRaises(ValueError) as cm:
-            PyPlink(new_prefix)
+            pyplink.PyPlink(new_prefix)
         self.assertEqual("not a valid BED file: {}".format(new_bed),
                          str(cm.exception))
 
@@ -277,7 +281,7 @@ class TestPyPlink(unittest.TestCase):
 
         # This should raise an exception
         with self.assertRaises(ValueError) as cm:
-            PyPlink(new_prefix)
+            pyplink.PyPlink(new_prefix)
         self.assertEqual(
             "not in SNP-major format (please recode): {}".format(new_bed),
             str(cm.exception),
@@ -295,7 +299,7 @@ class TestPyPlink(unittest.TestCase):
         for extension in (".bed", ".bim", ".fam"):
             os.remove(prefix + extension)
             with self.assertRaises(IOError) as cm:
-                PyPlink(prefix)
+                pyplink.PyPlink(prefix)
             self.assertEqual("No such file: '{}'".format(prefix + extension),
                              str(cm.exception))
             with open(prefix + extension, "w"):
@@ -309,7 +313,8 @@ class TestPyPlink(unittest.TestCase):
         """Tests that an exception is raised if in write mode."""
         with self.assertRaises(UnsupportedOperation) as cm:
             # Creating the dummy PyPlink object
-            with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
+            prefix = os.path.join(self.tmp_dir, "test_error")
+            with pyplink.PyPlink(prefix, "w") as p:
                 p.get_nb_markers()
         self.assertEqual("not available in 'w' mode", str(cm.exception))
 
@@ -321,7 +326,8 @@ class TestPyPlink(unittest.TestCase):
         """Tests that an exception is raised if in write mode."""
         with self.assertRaises(UnsupportedOperation) as cm:
             # Creating the dummy PyPlink object
-            with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
+            prefix = os.path.join(self.tmp_dir, "test_error")
+            with pyplink.PyPlink(prefix, "w") as p:
                 p.get_nb_samples()
         self.assertEqual("not available in 'w' mode", str(cm.exception))
 
@@ -331,10 +337,10 @@ class TestPyPlink(unittest.TestCase):
         ori_bim = self.pedfile._bim
 
         # The expected values
-        chromosomes = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        chromosomes = [1, 2, 3, 4, 4, 5, 6, 6, 6, 8]
         positions = [45162, 45257, 45413, 46844, 72434, 72515, 77689, 78032,
                      81468, 222077]
-        cms = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        cms = [0, 1, 1, 2, 2, 3, 4, 4, 5, 6]
         a1s = ["G", "C", "0", "A", "0", "0", "G", "0", "G", "A"]
         a2s = ["C", "T", "0", "T", "G", "C", "A", "T", "C", "G"]
 
@@ -375,7 +381,8 @@ class TestPyPlink(unittest.TestCase):
         """Tests that an exception is raised if in write mode."""
         with self.assertRaises(UnsupportedOperation) as cm:
             # Creating the dummy PyPlink object
-            with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
+            prefix = os.path.join(self.tmp_dir, "test_error")
+            with pyplink.PyPlink(prefix, "w") as p:
                 p.get_bim()
         self.assertEqual("not available in 'w' mode", str(cm.exception))
 
@@ -432,7 +439,8 @@ class TestPyPlink(unittest.TestCase):
         """Tests that an exception is raised if in write mode."""
         with self.assertRaises(UnsupportedOperation) as cm:
             # Creating the dummy PyPlink object
-            with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
+            prefix = os.path.join(self.tmp_dir, "test_error")
+            with pyplink.PyPlink(prefix, "w") as p:
                 p.get_fam()
         self.assertEqual("not available in 'w' mode", str(cm.exception))
 
@@ -455,7 +463,8 @@ class TestPyPlink(unittest.TestCase):
         """Tests that an exception is raised if in write mode."""
         with self.assertRaises(UnsupportedOperation) as cm:
             # Creating the dummy PyPlink object
-            with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
+            prefix = os.path.join(self.tmp_dir, "test_error")
+            with pyplink.PyPlink(prefix, "w") as p:
                 marker, genotypes = next(p)
         self.assertEqual("not available in 'w' mode", str(cm.exception))
 
@@ -471,7 +480,8 @@ class TestPyPlink(unittest.TestCase):
         """Tests that an exception is raised when calling next in w mode."""
         with self.assertRaises(UnsupportedOperation) as cm:
             # Creating the dummy PyPlink object
-            with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
+            prefix = os.path.join(self.tmp_dir, "test_error")
+            with pyplink.PyPlink(prefix, "w") as p:
                 p.next()
         self.assertEqual("not available in 'w' mode", str(cm.exception))
 
@@ -533,7 +543,8 @@ class TestPyPlink(unittest.TestCase):
         """Tests that an exception is raised if in write mode."""
         with self.assertRaises(UnsupportedOperation) as cm:
             # Creating the dummy PyPlink object
-            with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
+            prefix = os.path.join(self.tmp_dir, "test_error")
+            with pyplink.PyPlink(prefix, "w") as p:
                 p.seek(100)
         self.assertEqual("not available in 'w' mode", str(cm.exception))
 
@@ -551,7 +562,8 @@ class TestPyPlink(unittest.TestCase):
         """Tests that an exception is raised if in write mode."""
         with self.assertRaises(UnsupportedOperation) as cm:
             # Creating the dummy PyPlink object
-            with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
+            prefix = os.path.join(self.tmp_dir, "test_error")
+            with pyplink.PyPlink(prefix, "w") as p:
                 marker, genotypes = next(p.iter_geno())
         self.assertEqual("not available in 'w' mode", str(cm.exception))
 
@@ -569,7 +581,8 @@ class TestPyPlink(unittest.TestCase):
         """Tests that an exception is raised if in write mode."""
         with self.assertRaises(UnsupportedOperation) as cm:
             # Creating the dummy PyPlink object
-            with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
+            prefix = os.path.join(self.tmp_dir, "test_error")
+            with pyplink.PyPlink(prefix, "w") as p:
                 marker, genotypes = next(p.iter_acgt_geno())
         self.assertEqual("not available in 'w' mode", str(cm.exception))
 
@@ -609,7 +622,8 @@ class TestPyPlink(unittest.TestCase):
         """Tests that an exception is raised if in write mode."""
         with self.assertRaises(UnsupportedOperation) as cm:
             # Creating the dummy PyPlink object
-            with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
+            prefix = os.path.join(self.tmp_dir, "test_error")
+            with pyplink.PyPlink(prefix, "w") as p:
                 marker, genotypes = next(p.iter_geno_marker(["M1", "M2"]))
         self.assertEqual("not available in 'w' mode", str(cm.exception))
 
@@ -649,7 +663,8 @@ class TestPyPlink(unittest.TestCase):
         """Tests that an exception is raised if in write mode."""
         with self.assertRaises(UnsupportedOperation) as cm:
             # Creating the dummy PyPlink object
-            with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
+            prefix = os.path.join(self.tmp_dir, "test_error")
+            with pyplink.PyPlink(prefix, "w") as p:
                 marker, genotypes = next(p.iter_acgt_geno_marker(["M1", "M2"]))
         self.assertEqual("not available in 'w' mode", str(cm.exception))
 
@@ -681,7 +696,8 @@ class TestPyPlink(unittest.TestCase):
         e_repr = 'PyPlink(mode="w")'
 
         # Creating the dummy PyPlink object
-        with PyPlink(os.path.join(self.tmp_dir, "test_repr"), "w") as pedfile:
+        prefix = os.path.join(self.tmp_dir, "test_repr")
+        with pyplink.PyPlink(prefix, "w") as pedfile:
             # Comparing the expected with the observed representation
             o_repr = str(pedfile)
             self.assertEqual(e_repr, o_repr)
@@ -709,7 +725,8 @@ class TestPyPlink(unittest.TestCase):
         """Tests that an exception is raised if in write mode."""
         with self.assertRaises(UnsupportedOperation) as cm:
             # Creating the dummy PyPlink object
-            with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
+            prefix = os.path.join(self.tmp_dir, "test_error")
+            with pyplink.PyPlink(prefix, "w") as p:
                 p.get_geno_marker("M1")
         self.assertEqual("not available in 'w' mode", str(cm.exception))
 
@@ -717,7 +734,8 @@ class TestPyPlink(unittest.TestCase):
         """Tests that an exception is raised if in write mode."""
         with self.assertRaises(UnsupportedOperation) as cm:
             # Creating the dummy PyPlink object
-            with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
+            prefix = os.path.join(self.tmp_dir, "test_error")
+            with pyplink.PyPlink(prefix, "w") as p:
                 iter(p)
         self.assertEqual("not available in 'w' mode", str(cm.exception))
 
@@ -741,19 +759,20 @@ class TestPyPlink(unittest.TestCase):
         """Tests that an exception is raised if in write mode."""
         with self.assertRaises(UnsupportedOperation) as cm:
             # Creating the dummy PyPlink object
-            with PyPlink(os.path.join(self.tmp_dir, "test_error"), "w") as p:
+            prefix = os.path.join(self.tmp_dir, "test_error")
+            with pyplink.PyPlink(prefix, "w") as p:
                 p.get_acgt_geno_marker("M1")
         self.assertEqual("not available in 'w' mode", str(cm.exception))
 
     def test_get_context_read_mode(self):
         """Tests the PyPlink object as context manager."""
-        with PyPlink(self.prefix) as genotypes:
+        with pyplink.PyPlink(self.prefix) as genotypes:
             self.assertEqual(3, len(genotypes.get_fam().head(n=3)))
 
     def test_invalid_mode(self):
         """Tests invalid mode when PyPlink as context manager."""
         with self.assertRaises(ValueError) as cm:
-            PyPlink(self.prefix, "u")
+            pyplink.PyPlink(self.prefix, "u")
         self.assertEqual("invalid mode: 'u'", str(cm.exception))
 
     def test_write_binary(self):
@@ -769,7 +788,7 @@ class TestPyPlink(unittest.TestCase):
         test_prefix = os.path.join(self.tmp_dir, "test_write")
 
         # Writing the binary file
-        with PyPlink(test_prefix, "w") as pedfile:
+        with pyplink.PyPlink(test_prefix, "w") as pedfile:
             for genotypes in expected_genotypes:
                 pedfile.write_genotypes(genotypes)
 
@@ -789,7 +808,7 @@ class TestPyPlink(unittest.TestCase):
                       file=o_file)
 
         # Reading the written binary file
-        with PyPlink(test_prefix) as pedfile:
+        with pyplink.PyPlink(test_prefix) as pedfile:
             for i, (marker, genotypes) in enumerate(pedfile):
                 self.assertEqual("m{}".format(i+1), marker)
                 np.testing.assert_array_equal(expected_genotypes[i], genotypes)
@@ -808,7 +827,7 @@ class TestPyPlink(unittest.TestCase):
 
         # Writing the binary file
         with self.assertRaises(ValueError) as cm:
-            with PyPlink(test_prefix, "w") as pedfile:
+            with pyplink.PyPlink(test_prefix, "w") as pedfile:
                 pedfile.write_genotypes(expected_genotypes[0])  # 7 genotypes
                 pedfile.write_genotypes(expected_genotypes[1])  # 6 genotypes
         self.assertEqual("7 samples expected, got 6", str(cm.exception))
@@ -821,7 +840,7 @@ class TestPyPlink(unittest.TestCase):
             (6, 7, 8),
             (9, 0, 0),
         ]
-        observed_chunks = PyPlink._grouper(range(10), 3)
+        observed_chunks = pyplink.PyPlink._grouper(range(10), 3)
         for expected, observed in zip(expected_chunks, observed_chunks):
             self.assertEqual(expected, observed)
 
@@ -831,7 +850,7 @@ class TestPyPlink(unittest.TestCase):
             (0, 1, 2, 3, 4),
             (5, 6, 7, 8, 9),
         ]
-        observed_chunks = PyPlink._grouper(range(10), 5)
+        observed_chunks = pyplink.PyPlink._grouper(range(10), 5)
         for expected, observed in zip(expected_chunks, observed_chunks):
             self.assertEqual(expected, observed)
 
@@ -850,7 +869,7 @@ class TestPyPlink(unittest.TestCase):
             [0, 0, 0, 0,  0, 1, 0, 0, 0, 0],
         ]
         prefix = os.path.join(self.tmp_dir, "test_output")
-        with PyPlink(prefix, "w") as pedfile:
+        with pyplink.PyPlink(prefix, "w") as pedfile:
             for genotypes in all_genotypes:
                 pedfile.write_genotypes(genotypes)
 
@@ -950,7 +969,7 @@ class TestPyPlink(unittest.TestCase):
 
         # Creating the BED file (INDIVIDUAL-major)
         prefix = os.path.join(self.tmp_dir, "test_output")
-        with PyPlink(prefix, "w", "INDIVIDUAL-major") as pedfile:
+        with pyplink.PyPlink(prefix, "w", "INDIVIDUAL-major") as pedfile:
             for genotypes in transposed_genotypes:
                 pedfile.write_genotypes(genotypes)
 
@@ -1032,7 +1051,7 @@ class TestPyPlink(unittest.TestCase):
     def test_wrong_bed_format(self):
         """Tests opening a BED file with unknown format."""
         with self.assertRaises(ValueError) as cm:
-            PyPlink(self.prefix, bed_format="UNKNOWN-major")
+            pyplink.PyPlink(self.prefix, bed_format="UNKNOWN-major")
         self.assertEqual(
             "invalid bed format: UNKNOWN-major",
             str(cm.exception),
@@ -1041,7 +1060,7 @@ class TestPyPlink(unittest.TestCase):
     def test_invalid_bed_format_with_r_mode(self):
         """Tests an invalid BED format with r mode."""
         with self.assertRaises(ValueError) as cm:
-            PyPlink(self.prefix, bed_format="INDIVIDUAL-major")
+            pyplink.PyPlink(self.prefix, bed_format="INDIVIDUAL-major")
         self.assertEqual(
             "only SNP-major format is supported with mode 'r'",
             str(cm.exception),
@@ -1053,14 +1072,67 @@ class TestPyPlink(unittest.TestCase):
             self.pedfile.write_genotypes([0, 0, 0])
         self.assertEqual("not available in 'r' mode", str(cm.exception))
 
-    def test_write_marker_deprecation_warning(self):
-        """Tests that a deprecation warning is triggered."""
-        with warnings.catch_warnings(record=True) as w:
-            with PyPlink(os.path.join(self.tmp_dir, "test_warns"), "w") as p:
-                p.write_marker([0, 0, 0])
-            self.assertEqual(1, len(w))
-            self.assertTrue(issubclass(w[0].category, DeprecationWarning))
-            self.assertEqual(
-                "deprecated: use 'write_genotypes'",
-                str(w[0].message),
-            )
+    @mock.patch.object(pyplink, "logger")
+    def test_dup_markers(self, pyplink_logger):
+        """Tests when there are duplicated markers."""
+        # Checking the original one has no duplicates
+        self.assertEqual(len(self.pedfile.get_duplicated_markers()), 0)
+
+        # Copying the BED and the FAM to the temporary directory
+        new_prefix = os.path.join(self.tmp_dir, "with_dup")
+        for suffix in (".bed", ".fam"):
+            shutil.copyfile(self.prefix + suffix, new_prefix + suffix)
+
+        # Copying the BIM file to the temporary directory
+        shutil.copyfile(self.prefix + "_with_dup.bim", new_prefix + ".bim")
+
+        # Reading the new files
+        pedfile = pyplink.PyPlink(new_prefix)
+
+        # Checking a warning was called
+        self.assertTrue(pyplink_logger.warning.called)
+
+        # Checking the BIM
+        chromosomes = [1, 2, 3, 4, 4, 5, 6, 6, 6, 8]
+        markers = ["rs10399749", "rs2949420:dup1", "rs2949421", "rs2691310",
+                   "rs4030303:dup1", "rs4030303:dup2", "rs4030303:dup3",
+                   "rs940550:dup1", "rs940550:dup2", "rs2949420:dup2"]
+        positions = [45162, 45257, 45413, 46844, 72434, 72515, 77689, 78032,
+                     81468, 222077]
+        cms = [0, 1, 1, 2, 2, 3, 4, 4, 5, 6]
+        a1s = ["G", "C", "0", "A", "0", "0", "G", "0", "G", "A"]
+        a2s = ["C", "T", "0", "T", "G", "C", "A", "T", "C", "G"]
+
+        # Getting the BIM file
+        bim = pedfile.get_bim()
+
+        # Checking the columns
+        self.assertTrue(
+            set(bim.columns.values) == {"chrom", "pos", "cm", "a1", "a2"}
+        )
+
+        # Checking the indexes
+        self.assertTrue(set(bim.index.values) == set(markers))
+
+        # Checking the values for the markers
+        zipped = zip(markers, chromosomes, positions, cms, a1s, a2s)
+        for marker, chrom, pos, cm, a1, a2 in zipped:
+            self.assertEqual(chrom, bim.loc[marker, "chrom"])
+            self.assertEqual(pos, bim.loc[marker, "pos"])
+            self.assertEqual(cm, bim.loc[marker, "cm"])
+            self.assertEqual(a1, bim.loc[marker, "a1"])
+            self.assertEqual(a2, bim.loc[marker, "a2"])
+
+        # Checking only one duplicated markers
+        for i, marker in enumerate(markers):
+            geno = pedfile.get_geno_marker(marker)
+            np.testing.assert_array_equal(geno, self.genotypes[i])
+
+        # Checking the list of duplicated markers
+        self.assertEqual(
+            set(m.split(":")[0] for m in markers if ":" in m),
+            pedfile.get_duplicated_markers(),
+        )
+
+        # Closing the file
+        pedfile.close()

@@ -26,7 +26,9 @@
 
 
 import os
-import warnings
+import logging
+from itertools import repeat
+from collections import Counter
 from io import UnsupportedOperation
 
 try:
@@ -48,8 +50,8 @@ __license__ = "MIT"
 __all__ = ["PyPlink"]
 
 
-# Allowing for warnings
-warnings.simplefilter("once", DeprecationWarning)
+# The logger
+logger = logging.getLogger(__name__)
 
 
 # The recoding values
@@ -61,7 +63,28 @@ _byte_recode = dict(value[::-1] for value in _geno_recode.items())
 
 
 class PyPlink(object):
-    """Reads and store a set of binary Plink files."""
+    """Reads and store a set of binary Plink files.
+
+    Args:
+        prefix (str): The prefix of the binary Plink files.
+        mode (str): The open mode for the binary Plink file.
+        bed_format (str): The type of bed (SNP-major or INDIVIDUAL-major).
+
+    Reads or write binary Plink files (BED, BIM and FAM).
+
+    .. code-block:: python
+
+        from pyplink import PyPlink
+
+        # Reading BED files
+        with PyPlink("plink_file_prefix") as bed:
+            pass
+
+        # Writing BED files
+        with PyPlink("plink_file_prefix", "w") as bed:
+            pass
+
+    """
 
     # The genotypes values
     _geno_values = np.array(
@@ -72,18 +95,8 @@ class PyPlink(object):
         dtype=np.int8,
     )
 
-    def __init__(self, i_prefix, mode="r", bed_format="SNP-major"):
-        """Initializes a new PyPlink object.
-
-        Args:
-            i_prefix (str): the prefix of the binary Plink files
-            mode (str): the open mode for the binary Plink file
-            nb_samples (int): the number of samples
-            bed_format (str): the type of bed (SNP-major or INDIVIDUAL-major)
-
-        Reads or write binary Plink files (BED, BIM and FAM).
-
-        """
+    def __init__(self, prefix, mode="r", bed_format="SNP-major"):
+        """Initializes a new PyPlink instance."""
         # The mode
         self._mode = mode
 
@@ -93,9 +106,9 @@ class PyPlink(object):
         self._bed_format = bed_format
 
         # These are the name of the files
-        self.bed_filename = "{}.bed".format(i_prefix)
-        self.bim_filename = "{}.bim".format(i_prefix)
-        self.fam_filename = "{}.fam".format(i_prefix)
+        self.bed_filename = "{}.bed".format(prefix)
+        self.bim_filename = "{}.bim".format(prefix)
+        self.fam_filename = "{}.fam".format(prefix)
 
         if self._mode == "r":
             if self._bed_format != "SNP-major":
@@ -161,12 +174,18 @@ class PyPlink(object):
         self.close()
 
     def close(self):
-        """Closes the BED file if required."""
+        """Closes the BED file."""
         # Closing the BED file
         self._bed.close()
 
     def next(self):
-        """The next function."""
+        """Returns the next marker.
+
+        Returns:
+            tuple: The marker name as a string and its genotypes as a
+            :py:class:`numpy.ndarray`.
+
+        """
         if self._mode != "r":
             raise UnsupportedOperation("not available in 'w' mode")
 
@@ -174,7 +193,7 @@ class PyPlink(object):
         if self._n > self._nb_markers:
             raise StopIteration()
 
-        return self._markers[self._n - 1], self._read_current_marker()
+        return self._bim.index[self._n - 1], self._read_current_marker()
 
     def _read_current_marker(self):
         """Reads the current marker and returns its genotypes."""
@@ -183,7 +202,12 @@ class PyPlink(object):
         ].flatten(order="C")[:self._nb_samples]
 
     def seek(self, n):
-        """Gets to a certain position in the BED file when iterating."""
+        """Gets to a certain marker position in the BED file.
+
+        Args:
+            n (int): The index of the marker to seek to.
+
+        """
         if self._mode != "r":
             raise UnsupportedOperation("not available in 'w' mode")
 
@@ -196,30 +220,64 @@ class PyPlink(object):
             raise ValueError("invalid position in BED: {}".format(n))
 
     def _get_seek_position(self, n):
-        """Gets the seek position in the file (including special bytes)."""
+        """Gets the seek position in the file (including special bytes).
+
+        Args:
+            n (int): The index of the marker to seek to.
+
+        """
         return 3 + self._nb_bytes * n
 
     def _read_bim(self):
         """Reads the BIM file."""
         # Reading the BIM file and setting the values
         bim = pd.read_csv(self.bim_filename, delim_whitespace=True,
-                          names=["chrom", "snp", "cm", "pos", "a1", "a2"])
+                          names=["chrom", "snp", "cm", "pos", "a1", "a2"],
+                          dtype=dict(snp=str, a1=str, a2=str))
 
-        # The 'snp', 'a1' and 'a2' columns should always be strings
-        bim["snp"] = bim["snp"].astype(str)
-        bim["a1"] = bim["a1"].astype(str)
-        bim["a2"] = bim["a2"].astype(str)
+        # Saving the index as integer
+        bim["i"] = bim.index
 
-        bim = bim.set_index("snp")
-        bim["i"] = range(bim.shape[0])
-        bim[2] = bim.a1 * 2           # Original '0'
-        bim[1] = bim.a1 + bim.a2      # Original '2'
-        bim[0] = bim.a2 * 2           # Original '3'
-        bim[-1] = "00"                # Original 1
+        # Checking for duplicated markers
+        try:
+            bim = bim.set_index("snp", verify_integrity=True)
+            self._has_duplicated = False
 
-        # Testing something
+        except ValueError as e:
+            # Setting this flag to true
+            self._has_duplicated = True
+
+            # Finding the duplicated markers
+            duplicated = bim.snp.duplicated(keep=False)
+            duplicated_markers = bim.loc[duplicated, "snp"]
+            duplicated_marker_counts = duplicated_markers.value_counts()
+            self._dup_markers = set(duplicated_marker_counts.index)
+
+            # Logging a warning
+            logger.warning("Duplicated markers found")
+            for marker, count in duplicated_marker_counts.iteritems():
+                logger.warning("  - {}: {:,d} times".format(marker, count))
+            logger.warning("Appending ':dupX' to the duplicated markers "
+                           "according to their location in the BIM file")
+
+            # Renaming the markers
+            counter = Counter()
+            for i, marker in duplicated_markers.iteritems():
+                counter[marker] += 1
+                new_name = "{}:dup{}".format(marker, counter[marker])
+                bim.loc[i, "snp"] = new_name
+
+            # Resetting the index
+            bim = bim.set_index("snp", verify_integrity=True)
+
+        # Encoding the allele
+        #   - The original 0 is the actual 2 (a1/a1)
+        #   - The original 2 is the actual 1 (a1/a2)
+        #   - The original 3 is the actual 0 (a2/a2)
+        #   - The original 1 is the actual -1 (no call)
         allele_encoding = np.array(
-            [bim[0], bim[1], bim[2], bim[-1]],
+            [bim.a2 * 2, bim.a1 + bim.a2, bim.a1 * 2,
+             list(repeat("00", bim.shape[0]))],
             dtype="U2",
         )
         self._allele_encoding = allele_encoding.T
@@ -227,35 +285,52 @@ class PyPlink(object):
         # Saving the data in the object
         self._bim = bim[["chrom", "pos", "cm", "a1", "a2", "i"]]
         self._nb_markers = self._bim.shape[0]
-        self._markers = self._bim.index.values
 
     def get_bim(self):
-        """Returns the BIM file."""
+        """Returns the BIM file.
+
+        Returns:
+            pandas.DataFrame: The BIM file.
+
+        """
         if self._mode != "r":
             raise UnsupportedOperation("not available in 'w' mode")
 
         return self._bim.drop("i", axis=1)
 
     def get_nb_markers(self):
-        """Returns the number of markers."""
+        """Returns the number of markers.
+
+        Returns:
+            int: The number of markers in the dataset.
+
+        """
         if self._mode != "r":
             raise UnsupportedOperation("not available in 'w' mode")
 
         return self._nb_markers
+
+    def get_duplicated_markers(self):
+        """Returns the duplicated markers, if any.
+
+        Args:
+            set: The set of duplicated marker (might be empty).
+
+        """
+        if self._has_duplicated:
+            return self._dup_markers
+        else:
+            return set()
 
     def _read_fam(self):
         """Reads the FAM file."""
         # Reading the FAM file and setting the values
         fam = pd.read_csv(self.fam_filename, delim_whitespace=True,
                           names=["fid", "iid", "father", "mother", "gender",
-                                 "status"])
+                                 "status"],
+                          dtype=dict(fid=str, iid=str, father=str, mother=str))
 
-        # The sample IDs should always be strings (more logical that way)
-        fam["fid"] = fam["fid"].astype(str)
-        fam["iid"] = fam["iid"].astype(str)
-        fam["father"] = fam["father"].astype(str)
-        fam["mother"] = fam["mother"].astype(str)
-
+        # Getting the byte and bit location of each samples
         fam["byte"] = [
             int(np.ceil((1 + 1) / 4.0)) - 1 for i in range(len(fam))
         ]
@@ -266,14 +341,24 @@ class PyPlink(object):
         self._nb_samples = self._fam.shape[0]
 
     def get_fam(self):
-        """Returns the FAM file."""
+        """Returns the FAM file.
+
+        Returns:
+            pandas.DataFrame: The FAM file.
+
+        """
         if self._mode != "r":
             raise UnsupportedOperation("not available in 'w' mode")
 
         return self._fam.drop(["byte", "bit"], axis=1)
 
     def get_nb_samples(self):
-        """Returns the number of samples."""
+        """Returns the number of samples.
+
+        Returns:
+            int: The number of samples in the dataset.
+
+        """
         if self._mode != "r":
             raise UnsupportedOperation("not available in 'w' mode")
 
@@ -301,9 +386,9 @@ class PyPlink(object):
                 raise ValueError("not in SNP-major format (please recode): "
                                  "{}".format(self.bed_filename))
 
-            # Checking the last entry
-            seek_position = self._get_seek_position(self._bim.iloc[-1, :].i)
-            bed_file.seek(seek_position)
+            # Checking the last entry (for BED corruption)
+            seek_index = self._get_seek_position(self._bim.iloc[-1, :].i)
+            bed_file.seek(seek_index)
             geno = self._geno_values[
                 np.fromstring(bed_file.read(self._nb_bytes), dtype=np.uint8)
             ].flatten(order="C")[:self._nb_samples]
@@ -321,7 +406,13 @@ class PyPlink(object):
         self._bed.write(bytearray((108, 27, final_byte)))
 
     def iter_geno(self):
-        """Iterates over genotypes from the beginning."""
+        """Iterates over genotypes from the beginning of the BED file.
+
+        Returns:
+            tuple: The name of the marker as a string, and its genotypes as a
+            :py:class:`numpy.ndarray` (additive format).
+
+        """
         if self._mode != "r":
             raise UnsupportedOperation("not available in 'w' mode")
 
@@ -332,13 +423,29 @@ class PyPlink(object):
         return self
 
     def iter_acgt_geno(self):
-        """Iterates over genotypes (ACGT format)."""
+        """Iterates over genotypes (ACGT format).
+
+        Returns:
+            tuple: The name of the marker as a string, and its genotypes as a
+            :py:class:`numpy.ndarray` (ACGT format).
+
+        """
         # Need to iterate over itself, and modify the actual genotypes
         for i, (marker, geno) in enumerate(self.iter_geno()):
             yield marker, self._allele_encoding[i][geno]
 
-    def iter_geno_marker(self, markers, return_seek=False):
-        """Iterates over genotypes for given markers."""
+    def iter_geno_marker(self, markers, return_index=False):
+        """Iterates over genotypes for a list of markers.
+
+        Args:
+            markers (list): The list of markers to iterate onto.
+            return_index (bool): Wether to return the marker's index or not.
+
+        Returns:
+            tuple: The name of the marker as a string, and its genotypes as a
+            :py:class:`numpy.ndarray` (additive format).
+
+        """
         if self._mode != "r":
             raise UnsupportedOperation("not available in 'w' mode")
 
@@ -347,23 +454,41 @@ class PyPlink(object):
             markers = [markers]
 
         # Iterating over all markers
-        if return_seek:
+        if return_index:
             for marker in markers:
-                geno, seek = self.get_geno_marker(marker, return_seek=True)
+                geno, seek = self.get_geno_marker(marker, return_index=True)
                 yield marker, geno, seek
         else:
             for marker in markers:
                 yield marker, self.get_geno_marker(marker)
 
     def iter_acgt_geno_marker(self, markers):
-        """Iterates over genotypes for given markers (ACGT format)."""
+        """Iterates over genotypes for a list of markers (ACGT format).
+
+        Args:
+            markers (list): The list of markers to iterate onto.
+
+        Returns:
+            tuple: The name of the marker as a string, and its genotypes as a
+            :py:class:`numpy.ndarray` (ACGT format).
+
+        """
         # We iterate over the markers
-        for snp, geno, s in self.iter_geno_marker(markers, return_seek=True):
+        for snp, geno, s in self.iter_geno_marker(markers, return_index=True):
             # Getting the SNP position and converting to ACGT
             yield snp, self._allele_encoding[s][geno]
 
-    def get_geno_marker(self, marker, return_seek=False):
-        """Gets the genotypes for a given marker."""
+    def get_geno_marker(self, marker, return_index=False):
+        """Gets the genotypes for a given marker.
+
+        Args:
+            marker (str): The name of the marker.
+            return_index (bool): Wether to return the marker's index or not.
+
+        Returns:
+            numpy.ndarray: The genotypes of the marker (additive format).
+
+        """
         if self._mode != "r":
             raise UnsupportedOperation("not available in 'w' mode")
 
@@ -372,28 +497,36 @@ class PyPlink(object):
             raise ValueError("{}: marker not in BIM".format(marker))
 
         # Seeking to the correct position
-        seek_position = self._bim.loc[marker, "i"]
-        self.seek(seek_position)
+        seek_index = self._bim.loc[marker, "i"]
+        self.seek(seek_index)
 
-        if return_seek:
-            return self._read_current_marker(), seek_position
+        if return_index:
+            return self._read_current_marker(), seek_index
         return self._read_current_marker()
 
     def get_acgt_geno_marker(self, marker):
-        """Gets the genotypes for a given marker (ACGT format)."""
+        """Gets the genotypes for a given marker (ACGT format).
+
+        Args:
+            marker (str): The name of the marker.
+
+        Returns:
+            numpy.ndarray: The genotypes of the marker (ACGT format).
+
+        """
         # Getting the marker's genotypes
-        geno, snp_position = self.get_geno_marker(marker, return_seek=True)
+        geno, snp_position = self.get_geno_marker(marker, return_index=True)
 
         # Returning the ACGT's format of the genotypes
         return self._allele_encoding[snp_position][geno]
 
-    def write_marker(self, genotypes):
-        """Deprecated function."""
-        warnings.warn("deprecated: use 'write_genotypes'", DeprecationWarning)
-        self.write_genotypes(genotypes)
-
     def write_genotypes(self, genotypes):
-        """Write genotypes to binary file."""
+        """Write genotypes to binary file.
+
+        Args:
+            genotypes (numpy.ndarray): The genotypes to write in the BED file.
+
+        """
         if self._mode != "w":
             raise UnsupportedOperation("not available in 'r' mode")
 
@@ -417,6 +550,15 @@ class PyPlink(object):
 
     @staticmethod
     def _grouper(iterable, n, fillvalue=0):
-        """Collect data into fixed-length chunks or blocks."""
+        """Collect data into fixed-length chunks or blocks.
+
+        Args:
+            n (int): The size of the chunk.
+            fillvalue (int): The fill value.
+
+        Returns:
+            iterator: An iterator over the chunks.
+
+        """
         args = [iter(iterable)] * n
         return zip_longest(fillvalue=fillvalue, *args)

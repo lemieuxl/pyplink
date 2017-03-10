@@ -11,12 +11,13 @@
 
 
 import os
+import sys
 from setuptools import setup
 
 
 MAJOR = 1
 MINOR = 3
-MICRO = 1
+MICRO = 2
 VERSION = "{}.{}.{}".format(MAJOR, MINOR, MICRO)
 
 
@@ -39,6 +40,17 @@ def write_version_file(fn=None):
         a.close()
 
 
+def get_requirements():
+    # Initial requirements
+    requirements = ["numpy >= 1.8.2", "pandas >= 0.14.1", "six >= 1.9.0"]
+
+    # Checking if python 2 (requires mock)
+    if sys.version_info[0] == 2:
+        requirements.append(["mock >= 2.0.0"])
+
+    return requirements
+
+
 def setup_package():
     # Saving the version into a file
     write_version_file()
@@ -55,8 +67,7 @@ def setup_package():
         packages=["pyplink", "pyplink.tests"],
         package_data={"pyplink.tests": ["data/test_data.*"], },
         test_suite="pyplink.tests.test_suite",
-        install_requires=["numpy >= 1.8.2", "pandas >= 0.14.1",
-                          "six >= 1.9.0"],
+        install_requires=get_requirements(),
         classifiers=["Operating System :: POSIX :: Linux",
                      "Operating System :: MacOS :: MacOS X",
                      "Operating System :: Microsoft",
