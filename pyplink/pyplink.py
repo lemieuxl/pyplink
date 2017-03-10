@@ -387,8 +387,8 @@ class PyPlink(object):
                                  "{}".format(self.bed_filename))
 
             # Checking the last entry (for BED corruption)
-            seek_position = self._get_seek_position(self._bim.iloc[-1, :].i)
-            bed_file.seek(seek_position)
+            seek_index = self._get_seek_position(self._bim.iloc[-1, :].i)
+            bed_file.seek(seek_index)
             geno = self._geno_values[
                 np.fromstring(bed_file.read(self._nb_bytes), dtype=np.uint8)
             ].flatten(order="C")[:self._nb_samples]
@@ -434,12 +434,12 @@ class PyPlink(object):
         for i, (marker, geno) in enumerate(self.iter_geno()):
             yield marker, self._allele_encoding[i][geno]
 
-    def iter_geno_marker(self, markers, return_seek=False):
+    def iter_geno_marker(self, markers, return_index=False):
         """Iterates over genotypes for a list of markers.
 
         Args:
             markers (list): The list of markers to iterate onto.
-            return_seek (bool): Wether to return the marker's index or not.
+            return_index (bool): Wether to return the marker's index or not.
 
         Returns:
             tuple: The name of the marker as a string, and its genotypes as a
@@ -454,9 +454,9 @@ class PyPlink(object):
             markers = [markers]
 
         # Iterating over all markers
-        if return_seek:
+        if return_index:
             for marker in markers:
-                geno, seek = self.get_geno_marker(marker, return_seek=True)
+                geno, seek = self.get_geno_marker(marker, return_index=True)
                 yield marker, geno, seek
         else:
             for marker in markers:
@@ -474,16 +474,16 @@ class PyPlink(object):
 
         """
         # We iterate over the markers
-        for snp, geno, s in self.iter_geno_marker(markers, return_seek=True):
+        for snp, geno, s in self.iter_geno_marker(markers, return_index=True):
             # Getting the SNP position and converting to ACGT
             yield snp, self._allele_encoding[s][geno]
 
-    def get_geno_marker(self, marker, return_seek=False):
+    def get_geno_marker(self, marker, return_index=False):
         """Gets the genotypes for a given marker.
 
         Args:
             marker (str): The name of the marker.
-            return_seek (bool): Wether to return the marker's index or not.
+            return_index (bool): Wether to return the marker's index or not.
 
         Returns:
             numpy.ndarray: The genotypes of the marker (additive format).
@@ -497,11 +497,11 @@ class PyPlink(object):
             raise ValueError("{}: marker not in BIM".format(marker))
 
         # Seeking to the correct position
-        seek_position = self._bim.loc[marker, "i"]
-        self.seek(seek_position)
+        seek_index = self._bim.loc[marker, "i"]
+        self.seek(seek_index)
 
-        if return_seek:
-            return self._read_current_marker(), seek_position
+        if return_index:
+            return self._read_current_marker(), seek_index
         return self._read_current_marker()
 
     def get_acgt_geno_marker(self, marker):
@@ -515,7 +515,7 @@ class PyPlink(object):
 
         """
         # Getting the marker's genotypes
-        geno, snp_position = self.get_geno_marker(marker, return_seek=True)
+        geno, snp_position = self.get_geno_marker(marker, return_index=True)
 
         # Returning the ACGT's format of the genotypes
         return self._allele_encoding[snp_position][geno]
