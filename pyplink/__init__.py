@@ -25,7 +25,7 @@
 # THE SOFTWARE.
 
 
-from .pyplink import *
+from .pyplink import PyPlink
 
 try:
     from .version import pyplink_version as __version__
@@ -46,7 +46,7 @@ def test(verbosity=1):  # pragma: no cover
     """Executes all the tests for pyplink.
 
     Args:
-        verbosity (int): the verbosity level for unittest
+        verbosity (int): The verbosity level for :py:mod:`unittest`.
 
     Just set ``verbosity`` to an integer higher than ``1`` to have more
     information about the tests.
