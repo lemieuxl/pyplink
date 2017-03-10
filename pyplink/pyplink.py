@@ -72,6 +72,18 @@ class PyPlink(object):
 
     Reads or write binary Plink files (BED, BIM and FAM).
 
+    .. code-block:: python
+
+        from pyplink import PyPlink
+
+        # Reading BED files
+        with PyPlink("plink_file_prefix") as bed:
+            pass
+
+        # Writing BED files
+        with PyPlink("plink_file_prefix", "w") as bed:
+            pass
+
     """
 
     # The genotypes values
