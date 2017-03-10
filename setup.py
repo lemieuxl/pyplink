@@ -17,7 +17,7 @@ from setuptools import setup
 
 MAJOR = 1
 MINOR = 3
-MICRO = 2
+MICRO = 3
 VERSION = "{}.{}.{}".format(MAJOR, MINOR, MICRO)
 
 
@@ -65,7 +65,7 @@ def setup_package():
         url="http://www.statgen.org",
         license="MIT",
         packages=["pyplink", "pyplink.tests"],
-        package_data={"pyplink.tests": ["data/test_data.*"], },
+        package_data={"pyplink.tests": ["data/*"], },
         test_suite="pyplink.tests.test_suite",
         install_requires=get_requirements(),
         classifiers=["Operating System :: POSIX :: Linux",
