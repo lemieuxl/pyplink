@@ -1,0 +1,407 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pyplink’s API &#8212; pyplink 1.3.2 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.3.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Installation" href="installation.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">pyplink</a></h1>
+
+
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">pyplink&#8217;s API</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="installation.html" title="previous chapter">Installation</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pyplink-s-api">
+<h1>pyplink&#8217;s API<a class="headerlink" href="#pyplink-s-api" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="pyplink.PyPlink">
+<em class="property">class </em><code class="descclassname">pyplink.</code><code class="descname">PyPlink</code><span class="sig-paren">(</span><em>prefix</em>, <em>mode='r'</em>, <em>bed_format='SNP-major'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyplink/pyplink.html#PyPlink"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyplink.PyPlink" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads and store a set of binary Plink files.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>prefix</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) &#8211; The prefix of the binary Plink files.</li>
+<li><strong>mode</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) &#8211; The open mode for the binary Plink file.</li>
+<li><strong>bed_format</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) &#8211; The type of bed (SNP-major or INDIVIDUAL-major).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Reads or write binary Plink files (BED, BIM and FAM).</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyplink</span> <span class="kn">import</span> <span class="n">PyPlink</span>
+
+<span class="c1"># Reading BED files</span>
+<span class="k">with</span> <span class="n">PyPlink</span><span class="p">(</span><span class="s2">&quot;plink_file_prefix&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">bed</span><span class="p">:</span>
+    <span class="k">pass</span>
+
+<span class="c1"># Writing BED files</span>
+<span class="k">with</span> <span class="n">PyPlink</span><span class="p">(</span><span class="s2">&quot;plink_file_prefix&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">bed</span><span class="p">:</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="pyplink.PyPlink.close">
+<code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyplink/pyplink.html#PyPlink.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyplink.PyPlink.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Closes the BED file.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyplink.PyPlink.get_acgt_geno_marker">
+<code class="descname">get_acgt_geno_marker</code><span class="sig-paren">(</span><em>marker</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyplink/pyplink.html#PyPlink.get_acgt_geno_marker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyplink.PyPlink.get_acgt_geno_marker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the genotypes for a given marker (ACGT format).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>marker</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) &#8211; The name of the marker.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The genotypes of the marker (ACGT format).</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.12)">numpy.ndarray</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyplink.PyPlink.get_bim">
+<code class="descname">get_bim</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyplink/pyplink.html#PyPlink.get_bim"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyplink.PyPlink.get_bim" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the BIM file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The BIM file.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.19.2)">pandas.DataFrame</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyplink.PyPlink.get_duplicated_markers">
+<code class="descname">get_duplicated_markers</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyplink/pyplink.html#PyPlink.get_duplicated_markers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyplink.PyPlink.get_duplicated_markers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the duplicated markers, if any.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>set</strong> &#8211; The set of duplicated marker (might be empty).</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyplink.PyPlink.get_fam">
+<code class="descname">get_fam</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyplink/pyplink.html#PyPlink.get_fam"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyplink.PyPlink.get_fam" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the FAM file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The FAM file.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.19.2)">pandas.DataFrame</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyplink.PyPlink.get_geno_marker">
+<code class="descname">get_geno_marker</code><span class="sig-paren">(</span><em>marker</em>, <em>return_index=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyplink/pyplink.html#PyPlink.get_geno_marker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyplink.PyPlink.get_geno_marker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the genotypes for a given marker.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>marker</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) &#8211; The name of the marker.</li>
+<li><strong>return_index</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) &#8211; Wether to return the marker&#8217;s index or not.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The genotypes of the marker (additive format).</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.12)">numpy.ndarray</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyplink.PyPlink.get_nb_markers">
+<code class="descname">get_nb_markers</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyplink/pyplink.html#PyPlink.get_nb_markers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyplink.PyPlink.get_nb_markers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the number of markers.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The number of markers in the dataset.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.6)">int</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyplink.PyPlink.get_nb_samples">
+<code class="descname">get_nb_samples</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyplink/pyplink.html#PyPlink.get_nb_samples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyplink.PyPlink.get_nb_samples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the number of samples.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The number of samples in the dataset.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.6)">int</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyplink.PyPlink.iter_acgt_geno">
+<code class="descname">iter_acgt_geno</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyplink/pyplink.html#PyPlink.iter_acgt_geno"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyplink.PyPlink.iter_acgt_geno" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterates over genotypes (ACGT format).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The name of the marker as a string, and its genotypes as a
+<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.12)"><code class="xref py py-class docutils literal"><span class="pre">numpy.ndarray</span></code></a> (ACGT format).</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.6)">tuple</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyplink.PyPlink.iter_acgt_geno_marker">
+<code class="descname">iter_acgt_geno_marker</code><span class="sig-paren">(</span><em>markers</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyplink/pyplink.html#PyPlink.iter_acgt_geno_marker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyplink.PyPlink.iter_acgt_geno_marker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterates over genotypes for a list of markers (ACGT format).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>markers</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.6)"><em>list</em></a>) &#8211; The list of markers to iterate onto.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The name of the marker as a string, and its genotypes as a
+<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.12)"><code class="xref py py-class docutils literal"><span class="pre">numpy.ndarray</span></code></a> (ACGT format).</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.6)">tuple</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyplink.PyPlink.iter_geno">
+<code class="descname">iter_geno</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyplink/pyplink.html#PyPlink.iter_geno"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyplink.PyPlink.iter_geno" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterates over genotypes from the beginning of the BED file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The name of the marker as a string, and its genotypes as a
+<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.12)"><code class="xref py py-class docutils literal"><span class="pre">numpy.ndarray</span></code></a> (additive format).</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.6)">tuple</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyplink.PyPlink.iter_geno_marker">
+<code class="descname">iter_geno_marker</code><span class="sig-paren">(</span><em>markers</em>, <em>return_index=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyplink/pyplink.html#PyPlink.iter_geno_marker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyplink.PyPlink.iter_geno_marker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterates over genotypes for a list of markers.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>markers</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.6)"><em>list</em></a>) &#8211; The list of markers to iterate onto.</li>
+<li><strong>return_index</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) &#8211; Wether to return the marker&#8217;s index or not.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The name of the marker as a string, and its genotypes as a
+<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.12)"><code class="xref py py-class docutils literal"><span class="pre">numpy.ndarray</span></code></a> (additive format).</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.6)">tuple</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyplink.PyPlink.next">
+<code class="descname">next</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyplink/pyplink.html#PyPlink.next"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyplink.PyPlink.next" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the next marker.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The marker name as a string and its genotypes as a
+<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.12)"><code class="xref py py-class docutils literal"><span class="pre">numpy.ndarray</span></code></a>.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.6)">tuple</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyplink.PyPlink.seek">
+<code class="descname">seek</code><span class="sig-paren">(</span><em>n</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyplink/pyplink.html#PyPlink.seek"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyplink.PyPlink.seek" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets to a certain marker position in the BED file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>n</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) &#8211; The index of the marker to seek to.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyplink.PyPlink.write_genotypes">
+<code class="descname">write_genotypes</code><span class="sig-paren">(</span><em>genotypes</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyplink/pyplink.html#PyPlink.write_genotypes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyplink.PyPlink.write_genotypes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write genotypes to binary file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>genotypes</strong> (<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.12)"><em>numpy.ndarray</em></a>) &#8211; The genotypes to write in the BED file.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="module-pyplink"></span><p>A module to read Plink&#8217;s binary files.</p>
+<dl class="function">
+<dt id="pyplink.test">
+<code class="descclassname">pyplink.</code><code class="descname">test</code><span class="sig-paren">(</span><em>verbosity=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyplink.html#test"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyplink.test" title="Permalink to this definition">¶</a></dt>
+<dd><p>Executes all the tests for pyplink.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>verbosity</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) &#8211; The verbosity level for <a class="reference external" href="https://docs.python.org/3/library/unittest.html#module-unittest" title="(in Python v3.6)"><code class="xref py py-mod docutils literal"><span class="pre">unittest</span></code></a>.</td>
+</tr>
+</tbody>
+</table>
+<p>Just set <code class="docutils literal"><span class="pre">verbosity</span></code> to an integer higher than <code class="docutils literal"><span class="pre">1</span></code> to have more
+information about the tests.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &copy;2017, Louis-Philippe Lemieux Perreault.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/pyplink.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
