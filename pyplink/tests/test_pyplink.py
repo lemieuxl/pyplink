@@ -1129,10 +1129,12 @@ class TestPyPlink(unittest.TestCase):
             np.testing.assert_array_equal(geno, self.genotypes[i])
 
         # Checking the list of duplicated markers
-        self.assertEqual(
-            set(m.split(":")[0] for m in markers if ":" in m),
-            pedfile.get_duplicated_markers(),
+        expected_dup = dict(
+            rs2949420=["rs2949420:dup1", "rs2949420:dup2"],
+            rs4030303=["rs4030303:dup1", "rs4030303:dup2", "rs4030303:dup3"],
+            rs940550=["rs940550:dup1", "rs940550:dup2"],
         )
+        self.assertEqual(expected_dup, pedfile.get_duplicated_markers())
 
         # Closing the file
         pedfile.close()
