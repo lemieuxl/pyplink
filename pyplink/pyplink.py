@@ -251,7 +251,12 @@ class PyPlink(object):
             duplicated = bim.snp.duplicated(keep=False)
             duplicated_markers = bim.loc[duplicated, "snp"]
             duplicated_marker_counts = duplicated_markers.value_counts()
-            self._dup_markers = set(duplicated_marker_counts.index)
+
+            # The dictionary that will contain information about the duplicated
+            # markers
+            self._dup_markers = {
+                m: [] for m in duplicated_marker_counts.index
+            }
 
             # Logging a warning
             logger.warning("Duplicated markers found")
@@ -266,6 +271,9 @@ class PyPlink(object):
                 counter[marker] += 1
                 new_name = "{}:dup{}".format(marker, counter[marker])
                 bim.loc[i, "snp"] = new_name
+
+                # Updating the dictionary containing the duplicated markers
+                self._dup_markers[marker].append(new_name)
 
             # Resetting the index
             bim = bim.set_index("snp", verify_integrity=True)
@@ -320,7 +328,7 @@ class PyPlink(object):
         if self._has_duplicated:
             return self._dup_markers
         else:
-            return set()
+            return {}
 
     def _read_fam(self):
         """Reads the FAM file."""
