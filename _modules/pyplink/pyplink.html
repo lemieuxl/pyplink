@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pyplink.pyplink &#8212; pyplink 1.3.2 documentation</title>
+    <title>pyplink.pyplink &#8212; pyplink 1.3.4 documentation</title>
     
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.3.2',
+        VERSION:     '1.3.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -337,7 +337,12 @@
             <span class="n">duplicated</span> <span class="o">=</span> <span class="n">bim</span><span class="o">.</span><span class="n">snp</span><span class="o">.</span><span class="n">duplicated</span><span class="p">(</span><span class="n">keep</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
             <span class="n">duplicated_markers</span> <span class="o">=</span> <span class="n">bim</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">duplicated</span><span class="p">,</span> <span class="s2">&quot;snp&quot;</span><span class="p">]</span>
             <span class="n">duplicated_marker_counts</span> <span class="o">=</span> <span class="n">duplicated_markers</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_dup_markers</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">duplicated_marker_counts</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+
+            <span class="c1"># The dictionary that will contain information about the duplicated</span>
+            <span class="c1"># markers</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dup_markers</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">m</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">duplicated_marker_counts</span><span class="o">.</span><span class="n">index</span>
+            <span class="p">}</span>
 
             <span class="c1"># Logging a warning</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Duplicated markers found&quot;</span><span class="p">)</span>
@@ -352,6 +357,9 @@
                 <span class="n">counter</span><span class="p">[</span><span class="n">marker</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
                 <span class="n">new_name</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">:dup</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">marker</span><span class="p">,</span> <span class="n">counter</span><span class="p">[</span><span class="n">marker</span><span class="p">])</span>
                 <span class="n">bim</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="s2">&quot;snp&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_name</span>
+
+                <span class="c1"># Updating the dictionary containing the duplicated markers</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_dup_markers</span><span class="p">[</span><span class="n">marker</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_name</span><span class="p">)</span>
 
             <span class="c1"># Resetting the index</span>
             <span class="n">bim</span> <span class="o">=</span> <span class="n">bim</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;snp&quot;</span><span class="p">,</span> <span class="n">verify_integrity</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -406,7 +414,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_duplicated</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dup_markers</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">set</span><span class="p">()</span></div>
+            <span class="k">return</span> <span class="p">{}</span></div>
 
     <span class="k">def</span> <span class="nf">_read_fam</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Reads the FAM file.&quot;&quot;&quot;</span>
