@@ -7,7 +7,11 @@
 #   - python setup.py bdist_wheel --universal
 
 # How to build for conda (do both with 2.7 and 3.4)
-#   - bash conda_build.sh
+#   - cd conda_recipe
+#   - conda clean -ytps; conda build purge; conda build --python $VERSION .
+#   - cp $FILE ../conda_dist/linux-64
+#   - conda convert -p all ../conda_dist/linux-64/$FILE -o ../conda_dist
+#   - cd ../conda_dist && conda index *
 
 
 import os
