@@ -42,7 +42,7 @@ def write_version_file(fn=None):
 
 def get_requirements():
     # Initial requirements
-    requirements = ["numpy >= 1.8.2", "pandas >= 0.14.1", "six >= 1.9.0"]
+    requirements = ["numpy >= 1.8.2", "pandas >= 0.17.1", "six >= 1.9.0"]
 
     # Checking if python 2 (requires mock)
     if sys.version_info[0] == 2:
@@ -62,7 +62,7 @@ def setup_package():
         description="Python module to read binary Plink files.",
         author="Louis-Philippe Lemieux Perreault",
         author_email="louis-philippe.lemieux.perreault@statgen.org",
-        url="http://www.statgen.org",
+        url="https://github.com/lemieuxl/pyplink",
         license="MIT",
         packages=["pyplink", "pyplink.tests"],
         package_data={"pyplink.tests": ["data/*"], },
