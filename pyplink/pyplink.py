@@ -198,7 +198,7 @@ class PyPlink(object):
     def _read_current_marker(self):
         """Reads the current marker and returns its genotypes."""
         return self._geno_values[
-            np.fromstring(self._bed.read(self._nb_bytes), dtype=np.uint8)
+            np.frombuffer(self._bed.read(self._nb_bytes), dtype=np.uint8)
         ].flatten(order="C")[:self._nb_samples]
 
     def seek(self, n):
@@ -321,8 +321,8 @@ class PyPlink(object):
     def get_duplicated_markers(self):
         """Returns the duplicated markers, if any.
 
-        Args:
-            set: The set of duplicated marker (might be empty).
+        Returns:
+            dict: The set of duplicated marker (might be empty).
 
         """
         if self._has_duplicated:
@@ -398,7 +398,7 @@ class PyPlink(object):
             seek_index = self._get_seek_position(self._bim.iloc[-1, :].i)
             bed_file.seek(seek_index)
             geno = self._geno_values[
-                np.fromstring(bed_file.read(self._nb_bytes), dtype=np.uint8)
+                np.frombuffer(bed_file.read(self._nb_bytes), dtype=np.uint8)
             ].flatten(order="C")[:self._nb_samples]
             if geno.shape[0] != self._nb_samples:
                 raise ValueError("invalid number of entries: corrupted BED?")
