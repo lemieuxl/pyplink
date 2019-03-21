@@ -338,12 +338,6 @@ class PyPlink(object):
                                  "status"],
                           dtype=dict(fid=str, iid=str, father=str, mother=str))
 
-        # Getting the byte and bit location of each samples
-        fam["byte"] = [
-            int(np.ceil((1 + 1) / 4.0)) - 1 for i in range(len(fam))
-        ]
-        fam["bit"] = [(i % 4) * 2 for i in range(len(fam))]
-
         # Saving the data in the object
         self._fam = fam
         self._nb_samples = self._fam.shape[0]
@@ -358,7 +352,7 @@ class PyPlink(object):
         if self._mode != "r":
             raise UnsupportedOperation("not available in 'w' mode")
 
-        return self._fam.drop(["byte", "bit"], axis=1)
+        return self._fam.copy()
 
     def get_nb_samples(self):
         """Returns the number of samples.
