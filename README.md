@@ -1,4 +1,4 @@
-[![Build Status](https://github.com/lemieuxl/pyplink/actions/workflows/pyplink-test.yml/badge.svg?branch=master)](https://github.com/lemieuxl/pyplink/actions)
+[![Build Status](https://github.com/lemieuxl/pyplink/actions/workflows/python-tests.yml/badge.svg?branch=master)](https://github.com/lemieuxl/pyplink/actions)
 [![PyPI version](https://badge.fury.io/py/pyplink.svg)](http://badge.fury.io/py/pyplink)
 
 
