@@ -260,14 +260,14 @@ class PyPlink(object):
 
             # Logging a warning
             logger.warning("Duplicated markers found")
-            for marker, count in duplicated_marker_counts.iteritems():
+            for marker, count in duplicated_marker_counts.items():
                 logger.warning("  - {}: {:,d} times".format(marker, count))
             logger.warning("Appending ':dupX' to the duplicated markers "
                            "according to their location in the BIM file")
 
             # Renaming the markers
             counter = Counter()
-            for i, marker in duplicated_markers.iteritems():
+            for i, marker in duplicated_markers.items():
                 counter[marker] += 1
                 new_name = "{}:dup{}".format(marker, counter[marker])
                 bim.loc[i, "snp"] = new_name
