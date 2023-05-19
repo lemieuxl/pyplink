@@ -1,3 +1,4 @@
+"""Setup."""
 #!/usr/bin/env python
 
 # How to build source distribution
@@ -21,7 +22,7 @@ from setuptools import setup
 
 MAJOR = 1
 MINOR = 3
-MICRO = 5
+MICRO = 6
 VERSION = "{}.{}.{}".format(MAJOR, MINOR, MICRO)
 
 
@@ -78,10 +79,11 @@ def setup_package():
                      "Programming Language :: Python",
                      "Programming Language :: Python :: 2.7",
                      "Programming Language :: Python :: 3",
-                     "Programming Language :: Python :: 3.3",
-                     "Programming Language :: Python :: 3.4",
-                     "Programming Language :: Python :: 3.5",
-                     "Programming Language :: Python :: 3.6",
+                     "Programming Language :: Python :: 3.7",
+                     "Programming Language :: Python :: 3.8",
+                     "Programming Language :: Python :: 3.9",
+                     "Programming Language :: Python :: 3.10",
+                     "Programming Language :: Python :: 3.11",
                      "License :: OSI Approved :: MIT License",
                      "Topic :: Scientific/Engineering :: Bio-Informatics"],
         keywords="bioinformatics format Plink binary",

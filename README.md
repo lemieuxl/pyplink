@@ -1,18 +1,16 @@
 [![Build Status](https://github.com/lemieuxl/pyplink/actions/workflows/python-tests.yml/badge.svg?branch=master)](https://github.com/lemieuxl/pyplink/actions)
 [![PyPI version](https://badge.fury.io/py/pyplink.svg)](http://badge.fury.io/py/pyplink)
 
-
 # pyplink - Module to process Plink's binary files
 
 `PyPlink` is a Python module to read and write Plink's binary files. Short
 documentation available at
 [https://lemieuxl.github.io/pyplink/](https://lemieuxl.github.io/pyplink/).
 
-
 ## Dependencies
 
 The tool requires a standard [Python](http://python.org/) installation (2.7 and
-3.3 or higher are supported) with the following modules:
+3.7 or higher are supported) with the following modules:
 
 1. [numpy](http://www.numpy.org/) version 1.8.2 or latest
 2. [pandas](http://pandas.pydata.org/) version 0.17.1 or latest
@@ -20,7 +18,6 @@ The tool requires a standard [Python](http://python.org/) installation (2.7 and
 
 The tool has been tested on *Linux* only, but should work on *MacOS* and
 *Windows* operating systems as well.
-
 
 ## Installation
 
@@ -44,7 +41,6 @@ To add the channel, perform the following command:
 conda config --add channels http://statgen.org/wp-content/uploads/Softwares/pyplink
 ```
 
-
 ### Updating
 
 To update the module using `pip`:
@@ -63,7 +59,6 @@ conda update pyplink
 conda update pyplink -c http://statgen.org/wp-content/uploads/Softwares/pyplink
 ```
 
-
 ## Testing
 
 To test the module, just perform the following command:
@@ -76,7 +71,6 @@ Ran 45 tests in 0.334s
 
 OK
 ```
-
 
 ## Example
 
