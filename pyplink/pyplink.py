@@ -32,7 +32,7 @@ from collections import Counter
 from io import UnsupportedOperation
 
 try:
-    from itertools import zip_longest as zip_longest
+    from itertools import zip_longest
 except ImportError:
     from itertools import izip_longest as zip_longest
 
@@ -243,7 +243,7 @@ class PyPlink(object):
             bim = bim.set_index("snp", verify_integrity=True)
             self._has_duplicated = False
 
-        except ValueError as e:
+        except ValueError:
             # Setting this flag to true
             self._has_duplicated = True
 

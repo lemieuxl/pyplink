@@ -1,3 +1,4 @@
+"""Main script for tests."""
 # This file is part of pyplink.
 #
 # The MIT License (MIT)
