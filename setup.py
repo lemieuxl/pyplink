@@ -1,5 +1,5 @@
-"""Setup."""
 #!/usr/bin/env python
+"""Setup."""
 
 # How to build source distribution
 #   - python setup.py sdist --format bztar
