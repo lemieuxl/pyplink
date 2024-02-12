@@ -25,21 +25,14 @@
 # THE SOFTWARE.
 
 
-import os
 import logging
-from itertools import repeat
+import os
 from collections import Counter
 from io import UnsupportedOperation
-
-try:
-    from itertools import zip_longest
-except ImportError:
-    from itertools import izip_longest as zip_longest
+from itertools import repeat, zip_longest
 
 import numpy as np
 import pandas as pd
-
-from six.moves import range
 
 
 __author__ = "Louis-Philippe Lemieux Perreault"
