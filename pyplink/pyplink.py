@@ -95,13 +95,13 @@ class PyPlink(object):
 
         # The bed format
         if bed_format not in {"SNP-major", "INDIVIDUAL-major"}:
-            raise ValueError("invalid bed format: {}".format(bed_format))
+            raise ValueError(f"invalid bed format: {bed_format}")
         self._bed_format = bed_format
 
         # These are the name of the files
-        self.bed_filename = "{}.bed".format(prefix)
-        self.bim_filename = "{}.bim".format(prefix)
-        self.fam_filename = "{}.fam".format(prefix)
+        self.bed_filename = f"{prefix}.bed"
+        self.bim_filename = f"{prefix}.bim"
+        self.fam_filename = f"{prefix}.fam"
 
         if self._mode == "r":
             if self._bed_format != "SNP-major":
@@ -112,7 +112,7 @@ class PyPlink(object):
             for filename in (self.bed_filename, self.bim_filename,
                              self.fam_filename):
                 if not os.path.isfile(filename):
-                    raise IOError("No such file: '{}'".format(filename))
+                    raise IOError(f"No such file: '{filename}'")
 
             # Setting BIM and FAM to None
             self._bim = None
@@ -135,14 +135,14 @@ class PyPlink(object):
             self._write_bed_header()
 
         else:
-            raise ValueError("invalid mode: '{}'".format(self._mode))
+            raise ValueError(f"invalid mode: '{self._mode}'")
 
     def __repr__(self):
         """The representation of the PyPlink object."""
         if self._mode == "r":
-            return "PyPlink({:,d} samples; {:,d} markers)".format(
-                self.get_nb_samples(),
-                self.get_nb_markers(),
+            return (
+                f"PyPlink({self.get_nb_samples():,d} samples; "
+                f"{self.get_nb_markers():,d} markers)"
             )
 
         return 'PyPlink(mode="w")'
@@ -210,7 +210,7 @@ class PyPlink(object):
 
         else:
             # Invalid seek value
-            raise ValueError("invalid position in BED: {}".format(n))
+            raise ValueError(f"invalid position in BED: {n}")
 
     def _get_seek_position(self, n):
         """Gets the seek position in the file (including special bytes).
@@ -254,7 +254,7 @@ class PyPlink(object):
             # Logging a warning
             logger.warning("Duplicated markers found")
             for marker, count in duplicated_marker_counts.items():
-                logger.warning("  - {}: {:,d} times".format(marker, count))
+                logger.warning("  - %s: %s times", marker, count)
             logger.warning("Appending ':dupX' to the duplicated markers "
                            "according to their location in the BIM file")
 
@@ -262,7 +262,7 @@ class PyPlink(object):
             counter = Counter()
             for i, marker in duplicated_markers.items():
                 counter[marker] += 1
-                new_name = "{}:dup{}".format(marker, counter[marker])
+                new_name = f"{marker}:dup{counter[marker]}"
                 bim.loc[i, "snp"] = new_name
 
                 # Updating the dictionary containing the duplicated markers
@@ -373,13 +373,12 @@ class PyPlink(object):
         with open(self.bed_filename, "rb") as bed_file:
             # Checking that the first two bytes are OK
             if (ord(bed_file.read(1)) != 108) or (ord(bed_file.read(1)) != 27):
-                raise ValueError("not a valid BED file: "
-                                 "{}".format(self.bed_filename))
+                raise ValueError(f"not a valid BED file: {self.bed_filename}")
 
             # Checking that the format is SNP-major
             if ord(bed_file.read(1)) != 1:
-                raise ValueError("not in SNP-major format (please recode): "
-                                 "{}".format(self.bed_filename))
+                raise ValueError(f"not in SNP-major format (please recode): "
+                                 f"{self.bed_filename}")
 
             # Checking the last entry (for BED corruption)
             seek_index = self._get_seek_position(self._bim.iloc[-1, :].i)
@@ -489,7 +488,7 @@ class PyPlink(object):
 
         # Check if the marker exists
         if marker not in self._bim.index:
-            raise ValueError("{}: marker not in BIM".format(marker))
+            raise ValueError(f"{marker}: marker not in BIM")
 
         # Seeking to the correct position
         seek_index = self._bim.loc[marker, "i"]
@@ -531,10 +530,10 @@ class PyPlink(object):
 
         # Checking the expected number of samples
         if self._nb_values != len(genotypes):
-            raise ValueError("{:,d} samples expected, got {:,d}".format(
-                self._nb_values,
-                len(genotypes),
-            ))
+            raise ValueError(
+                f"{self._nb_values:,d} samples expected, got "
+                f"{len(genotypes):,d}"
+            )
 
         # Writing to file
         byte_array = [
