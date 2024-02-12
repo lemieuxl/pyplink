@@ -22,7 +22,7 @@ from setuptools import setup
 
 MAJOR = 1
 MINOR = 3
-MICRO = 6
+MICRO = 7
 VERSION = "{}.{}.{}".format(MAJOR, MINOR, MICRO)
 
 
@@ -77,13 +77,13 @@ def setup_package():
                      "Operating System :: MacOS :: MacOS X",
                      "Operating System :: Microsoft",
                      "Programming Language :: Python",
-                     "Programming Language :: Python :: 2.7",
                      "Programming Language :: Python :: 3",
                      "Programming Language :: Python :: 3.7",
                      "Programming Language :: Python :: 3.8",
                      "Programming Language :: Python :: 3.9",
                      "Programming Language :: Python :: 3.10",
                      "Programming Language :: Python :: 3.11",
+                     "Programming Language :: Python :: 3.12",
                      "License :: OSI Approved :: MIT License",
                      "Topic :: Scientific/Engineering :: Bio-Informatics"],
         keywords="bioinformatics format Plink binary",

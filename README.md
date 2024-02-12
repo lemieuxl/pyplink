@@ -9,12 +9,11 @@ documentation available at
 
 ## Dependencies
 
-The tool requires a standard [Python](http://python.org/) installation (2.7 and
-3.7 or higher are supported) with the following modules:
+The tool requires a standard [Python](http://python.org/) installation (3.7 or
+higher are supported) with the following modules:
 
-1. [numpy](http://www.numpy.org/) version 1.8.2 or latest
-2. [pandas](http://pandas.pydata.org/) version 0.17.1 or latest
-3. [six](https://pythonhosted.org/six/) version 1.9.0 or latest
+1. [numpy](http://www.numpy.org/)
+2. [pandas](http://pandas.pydata.org/)
 
 The tool has been tested on *Linux* only, but should work on *MacOS* and
 *Windows* operating systems as well.
@@ -76,4 +75,4 @@ OK
 
 The following
 [notebook](http://nbviewer.ipython.org/github/lemieuxl/pyplink/blob/master/demo/PyPlink%20Demo.ipynb)
-contains a demonstration (for both Python 2 and 3) of the `PyPlink` module.
+contains a demonstration of the `PyPlink` module.
