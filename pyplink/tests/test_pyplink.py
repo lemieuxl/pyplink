@@ -372,7 +372,7 @@ class TestPyPlink(unittest.TestCase):
         # Testing that changing a values in the BIM, doesn't change the value
         # in the original BIM
         bim.loc["rs4030300", "chrom"] = 2
-        bim.loc["rs2949420", "cm"] = 0.1
+        bim.loc["rs2949420", "cm"] = 100
         comparison = ori_bim.loc[:, ["chrom", "pos", "cm", "a1", "a2"]] == bim
         self.assertFalse(comparison.all().chrom)
         self.assertFalse(comparison.all().cm)
