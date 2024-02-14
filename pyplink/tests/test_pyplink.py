@@ -24,42 +24,25 @@
 # THE SOFTWARE.
 
 
-from __future__ import print_function
-
 import os
-import sys
-import stat
+import platform
 import random
 import shutil
-import zipfile
-import platform
+import stat
+import sys
 import unittest
-from tempfile import mkdtemp
+import zipfile
 from io import UnsupportedOperation
-from distutils.spawn import find_executable
-from subprocess import check_call, PIPE, CalledProcessError
-
-try:
-    from itertools import zip_longest as zip
-except ImportError:
-    from itertools import izip_longest as zip
-
-try:
-    from urllib.request import urlretrieve
-except ImportError:
-    from urllib import urlretrieve
-
-try:
-    from unittest import mock
-except ImportError:
-    import mock
-
-from pkg_resources import resource_filename
+from itertools import zip_longest as zip
+from shutil import which
+from subprocess import PIPE, CalledProcessError, check_call
+from tempfile import mkdtemp
+from unittest import mock
+from urllib.request import urlretrieve
 
 import numpy as np
 import pandas as pd
-
-from six.moves import range
+from pkg_resources import resource_filename
 
 from .. import pyplink
 
@@ -71,7 +54,7 @@ def get_plink(tmp_dir):
     if platform.system() == "Windows":
         plink_path += ".exe"
 
-    if find_executable(plink_path) is None:
+    if which(plink_path) is None:
         print("Downloading Plink", file=sys.stderr)
 
         # The url for each platform
