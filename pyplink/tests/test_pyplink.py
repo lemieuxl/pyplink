@@ -33,7 +33,7 @@ import sys
 import unittest
 import zipfile
 from io import UnsupportedOperation
-from itertools import zip_longest as zip
+from itertools import zip_longest
 from shutil import which
 from subprocess import PIPE, CalledProcessError, check_call
 from tempfile import mkdtemp
@@ -116,6 +116,7 @@ def get_plink(tmp_dir):
 
 
 class TestPyPlink(unittest.TestCase):
+    """Class to test PyPlink."""
 
     @classmethod
     def setUpClass(cls):
@@ -244,8 +245,7 @@ class TestPyPlink(unittest.TestCase):
         # This should raise an exception
         with self.assertRaises(ValueError) as cm:
             pyplink.PyPlink(new_prefix)
-        self.assertEqual("not a valid BED file: {}".format(new_bed),
-                         str(cm.exception))
+        self.assertEqual(f"not a valid BED file: {new_bed}", str(cm.exception))
 
         # Creating a new BED file with invalid second byte
         new_bed = new_prefix + ".bed"
@@ -255,8 +255,7 @@ class TestPyPlink(unittest.TestCase):
         # This should raise an exception
         with self.assertRaises(ValueError) as cm:
             pyplink.PyPlink(new_prefix)
-        self.assertEqual("not a valid BED file: {}".format(new_bed),
-                         str(cm.exception))
+        self.assertEqual(f"not a valid BED file: {new_bed}", str(cm.exception))
 
         # Creating a new BED file not in SNP-major format
         new_bed = new_prefix + ".bed"
@@ -267,7 +266,7 @@ class TestPyPlink(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
             pyplink.PyPlink(new_prefix)
         self.assertEqual(
-            "not in SNP-major format (please recode): {}".format(new_bed),
+            f"not in SNP-major format (please recode): {new_bed}",
             str(cm.exception),
         )
 
@@ -284,7 +283,7 @@ class TestPyPlink(unittest.TestCase):
             os.remove(prefix + extension)
             with self.assertRaises(IOError) as cm:
                 pyplink.PyPlink(prefix)
-            self.assertEqual("No such file: '{}'".format(prefix + extension),
+            self.assertEqual(f"No such file: '{prefix + extension}'",
                              str(cm.exception))
             with open(prefix + extension, "w"):
                 pass
@@ -340,7 +339,9 @@ class TestPyPlink(unittest.TestCase):
         self.assertTrue(set(bim.index.values) == set(self.markers))
 
         # Checking the values for the markers
-        zipped = zip(self.markers, chromosomes, positions, cms, a1s, a2s)
+        zipped = zip_longest(
+            self.markers, chromosomes, positions, cms, a1s, a2s,
+        )
         for marker, chrom, pos, cm, a1, a2 in zipped:
             self.assertEqual(chrom, bim.loc[marker, "chrom"])
             self.assertEqual(pos, bim.loc[marker, "pos"])
@@ -393,7 +394,7 @@ class TestPyPlink(unittest.TestCase):
         )
 
         # Checking the values
-        zipped = zip(fids, iids, fathers, mothers, genders, status)
+        zipped = zip_longest(fids, iids, fathers, mothers, genders, status)
         for i, (fid, iid, father, mother, gender, s) in enumerate(zipped):
             self.assertEqual(fid, fam.loc[i, "fid"])
             self.assertEqual(iid, fam.loc[i, "iid"])
@@ -431,8 +432,8 @@ class TestPyPlink(unittest.TestCase):
     def test_generator(self):
         """Testing the class as a generator."""
         # Zipping and checking
-        zipped = zip(
-            [i for i in zip(self.markers, self.genotypes)],
+        zipped = zip_longest(
+            [i for i in zip_longest(self.markers, self.genotypes)],
             self.pedfile,
         )
         for (e_marker, e_geno), (marker, geno) in zipped:
@@ -479,8 +480,8 @@ class TestPyPlink(unittest.TestCase):
         self.assertEqual(0, len(remaining))
 
         # Seeking at the second position
-        zipped = zip(
-            [i for i in zip(self.markers[1:], self.genotypes[1:])],
+        zipped = zip_longest(
+            [i for i in zip_longest(self.markers[1:], self.genotypes[1:])],
             self.pedfile,
         )
         self.pedfile.seek(1)
@@ -489,8 +490,8 @@ class TestPyPlink(unittest.TestCase):
             np.testing.assert_array_equal(e_geno, geno)
 
         # Seeking at the fourth position
-        zipped = zip(
-            [i for i in zip(self.markers[3:], self.genotypes[3:])],
+        zipped = zip_longest(
+            [i for i in zip_longest(self.markers[3:], self.genotypes[3:])],
             self.pedfile,
         )
         self.pedfile.seek(3)
@@ -499,8 +500,8 @@ class TestPyPlink(unittest.TestCase):
             np.testing.assert_array_equal(e_geno, geno)
 
         # Seeking at the tenth position
-        zipped = zip(
-            [i for i in zip(self.markers[9:], self.genotypes[9:])],
+        zipped = zip_longest(
+            [i for i in zip_longest(self.markers[9:], self.genotypes[9:])],
             self.pedfile,
         )
         self.pedfile.seek(9)
@@ -534,8 +535,8 @@ class TestPyPlink(unittest.TestCase):
 
     def test_iter_geno(self):
         """Tests the 'iter_geno' function."""
-        zipped = zip(
-            [i for i in zip(self.markers, self.genotypes)],
+        zipped = zip_longest(
+            [i for i in zip_longest(self.markers, self.genotypes)],
             self.pedfile.iter_geno(),
         )
         for (e_marker, e_geno), (marker, geno) in zipped:
@@ -553,8 +554,8 @@ class TestPyPlink(unittest.TestCase):
 
     def test_iter_acgt_geno(self):
         """Tests the 'iter_acgt_geno" function."""
-        zipped = zip(
-            [i for i in zip(self.markers, self.acgt_genotypes)],
+        zipped = zip_longest(
+            [i for i in zip_longest(self.markers, self.acgt_genotypes)],
             self.pedfile.iter_acgt_geno(),
         )
         for (e_marker, e_geno), (marker, geno) in zipped:
@@ -580,8 +581,8 @@ class TestPyPlink(unittest.TestCase):
         genotypes = [self.genotypes[i] for i in indexes]
 
         # Zipping and comparing
-        zipped = zip(
-            [i for i in zip(markers, genotypes)],
+        zipped = zip_longest(
+            [i for i in zip_longest(markers, genotypes)],
             self.pedfile.iter_geno_marker(markers),
         )
         for (e_marker, e_geno), (marker, geno) in zipped:
@@ -621,8 +622,8 @@ class TestPyPlink(unittest.TestCase):
         genotypes = [self.acgt_genotypes[i] for i in indexes]
 
         # Zipping and comparing
-        zipped = zip(
-            [i for i in zip(markers, genotypes)],
+        zipped = zip_longest(
+            [i for i in zip_longest(markers, genotypes)],
             self.pedfile.iter_acgt_geno_marker(markers),
         )
         for (e_marker, e_geno), (marker, geno) in zipped:
@@ -665,8 +666,7 @@ class TestPyPlink(unittest.TestCase):
             nb_markers = len(i_file.read().splitlines())
 
         # Creating the expected string representation
-        e_repr = "PyPlink({:,d} samples; {:,d} markers)".format(nb_samples,
-                                                                nb_markers)
+        e_repr = f"PyPlink({nb_samples:,d} samples; {nb_markers:,d} markers)"
 
         # Getting the observed string representation
         o_repr = str(self.pedfile)
@@ -782,19 +782,19 @@ class TestPyPlink(unittest.TestCase):
         # Writing the FAM file
         with open(test_prefix + ".fam", "w") as o_file:
             for i in range(7):
-                print("f{}".format(i+1), "s{}".format(i+1), "0", "0",
+                print(f"f{i+1}", f"s{i+1}", "0", "0",
                       random.choice((1, 2)), "-9", sep=" ", file=o_file)
 
         # Writing the BIM file
         with open(test_prefix + ".bim", "w") as o_file:
             for i in range(3):
-                print(i+1, "m{}".format(i+1), "0", i+1, "T", "A", sep="\t",
+                print(i+1, f"m{i+1}", "0", i+1, "T", "A", sep="\t",
                       file=o_file)
 
         # Reading the written binary file
         with pyplink.PyPlink(test_prefix) as pedfile:
             for i, (marker, genotypes) in enumerate(pedfile):
-                self.assertEqual("m{}".format(i+1), marker)
+                self.assertEqual(f"m{i+1}", marker)
                 np.testing.assert_array_equal(expected_genotypes[i], genotypes)
 
     def test_write_binary_error(self):
@@ -825,7 +825,8 @@ class TestPyPlink(unittest.TestCase):
             (9, 0, 0),
         ]
         observed_chunks = pyplink.PyPlink._grouper(range(10), 3)
-        for expected, observed in zip(expected_chunks, observed_chunks):
+        for expected, observed in zip_longest(expected_chunks,
+                                              observed_chunks):
             self.assertEqual(expected, observed)
 
     def test_grouper_no_padding(self):
@@ -835,11 +836,12 @@ class TestPyPlink(unittest.TestCase):
             (5, 6, 7, 8, 9),
         ]
         observed_chunks = pyplink.PyPlink._grouper(range(10), 5)
-        for expected, observed in zip(expected_chunks, observed_chunks):
+        for expected, observed in zip_longest(expected_chunks,
+                                              observed_chunks):
             self.assertEqual(expected, observed)
 
     @unittest.skipIf(platform.system() not in {"Darwin", "Linux", "Windows"},
-                     "Plink not available for {}".format(platform.system()))
+                     f"Plink not available for {platform.system()}")
     def test_with_plink(self):
         """Tests to read a binary file using Plink."""
         # Checking if we need to skip
@@ -933,7 +935,7 @@ class TestPyPlink(unittest.TestCase):
             self.assertEqual("", i_file.readline())
 
     @unittest.skipIf(platform.system() not in {"Darwin", "Linux", "Windows"},
-                     "Plink not available for {}".format(platform.system()))
+                     f"Plink not available for {platform.system()}")
     def test_with_plink_individual_major(self):
         """Tests to read a binary file (INDIVIDUAL-major) using Plink."""
         # Checking if we need to skip
@@ -1099,7 +1101,7 @@ class TestPyPlink(unittest.TestCase):
         self.assertTrue(set(bim.index.values) == set(markers))
 
         # Checking the values for the markers
-        zipped = zip(markers, chromosomes, positions, cms, a1s, a2s)
+        zipped = zip_longest(markers, chromosomes, positions, cms, a1s, a2s)
         for marker, chrom, pos, cm, a1, a2 in zipped:
             self.assertEqual(chrom, bim.loc[marker, "chrom"])
             self.assertEqual(pos, bim.loc[marker, "pos"])
