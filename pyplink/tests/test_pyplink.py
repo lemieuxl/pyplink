@@ -452,7 +452,7 @@ class TestPyPlink(unittest.TestCase):
             # Creating the dummy PyPlink object
             prefix = os.path.join(self.tmp_dir, "test_error")
             with pyplink.PyPlink(prefix, "w") as p:
-                marker, genotypes = next(p)
+                next(p)
         self.assertEqual("not available in 'w' mode", str(cm.exception))
 
     def test_next(self):
@@ -551,7 +551,7 @@ class TestPyPlink(unittest.TestCase):
             # Creating the dummy PyPlink object
             prefix = os.path.join(self.tmp_dir, "test_error")
             with pyplink.PyPlink(prefix, "w") as p:
-                marker, genotypes = next(p.iter_geno())
+                next(p.iter_geno())
         self.assertEqual("not available in 'w' mode", str(cm.exception))
 
     def test_iter_acgt_geno(self):
@@ -570,7 +570,7 @@ class TestPyPlink(unittest.TestCase):
             # Creating the dummy PyPlink object
             prefix = os.path.join(self.tmp_dir, "test_error")
             with pyplink.PyPlink(prefix, "w") as p:
-                marker, genotypes = next(p.iter_acgt_geno())
+                next(p.iter_acgt_geno())
         self.assertEqual("not available in 'w' mode", str(cm.exception))
 
     def test_iter_geno_marker(self):
@@ -602,7 +602,8 @@ class TestPyPlink(unittest.TestCase):
         # Adding a marker that doesn't exist
         markers.extend(["unknown_1", "unknown_2"])
         with self.assertRaises(ValueError) as cm:
-            [i for i in self.pedfile.iter_geno_marker(markers)]
+            for _ in self.pedfile.iter_geno_marker(markers):
+                pass
         self.assertEqual("unknown_1: marker not in BIM", str(cm.exception))
 
     def test_iter_geno_marker_w_mode(self):
@@ -611,7 +612,7 @@ class TestPyPlink(unittest.TestCase):
             # Creating the dummy PyPlink object
             prefix = os.path.join(self.tmp_dir, "test_error")
             with pyplink.PyPlink(prefix, "w") as p:
-                marker, genotypes = next(p.iter_geno_marker(["M1", "M2"]))
+                next(p.iter_geno_marker(["M1", "M2"]))
         self.assertEqual("not available in 'w' mode", str(cm.exception))
 
     def test_iter_acgt_geno_marker(self):
@@ -643,7 +644,8 @@ class TestPyPlink(unittest.TestCase):
         # Adding a marker that doesn't exist
         markers.extend(["unknown_3", "unknown_4"])
         with self.assertRaises(ValueError) as cm:
-            [i for i in self.pedfile.iter_acgt_geno_marker(markers)]
+            for _ in self.pedfile.iter_acgt_geno_marker(markers):
+                pass
         self.assertEqual("unknown_3: marker not in BIM", str(cm.exception))
 
     def test_iter_acgt_geno_marker_w_mode(self):
@@ -652,7 +654,7 @@ class TestPyPlink(unittest.TestCase):
             # Creating the dummy PyPlink object
             prefix = os.path.join(self.tmp_dir, "test_error")
             with pyplink.PyPlink(prefix, "w") as p:
-                marker, genotypes = next(p.iter_acgt_geno_marker(["M1", "M2"]))
+                next(p.iter_acgt_geno_marker(["M1", "M2"]))
         self.assertEqual("not available in 'w' mode", str(cm.exception))
 
     def test_repr_r_mode(self):
