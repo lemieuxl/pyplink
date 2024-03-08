@@ -5,14 +5,7 @@
 #   - python setup.py sdist --format bztar
 #   - python setup.py sdist --format gztar
 #   - python setup.py sdist --format zip
-#   - python setup.py bdist_wheel --universal
-
-# How to build for conda (do both with 2.7 and 3.4)
-#   - cd conda_recipe
-#   - conda clean -ytps; conda build purge; conda build --python $VERSION .
-#   - cp $FILE ../conda_dist/linux-64
-#   - conda convert -p all ../conda_dist/linux-64/$FILE -o ../conda_dist
-#   - cd ../conda_dist && conda index *
+#   - python setup.py bdist_wheel
 
 
 import os
@@ -47,7 +40,7 @@ def write_version_file(fn=None):
 
 def get_requirements():
     # Initial requirements
-    requirements = ["numpy >= 1.8.2", "pandas >= 0.17.1", "six >= 1.9.0"]
+    requirements = ["numpy >= 1.8.2", "pandas >= 0.17.1"]
 
     # Checking if python 2 (requires mock)
     if sys.version_info[0] == 2:
