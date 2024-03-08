@@ -24,6 +24,7 @@
 # THE SOFTWARE.
 
 
+import atexit
 import os
 import platform
 import random
@@ -32,6 +33,7 @@ import stat
 import sys
 import unittest
 import zipfile
+from contextlib import ExitStack
 from io import UnsupportedOperation
 from itertools import zip_longest
 from shutil import which
@@ -40,9 +42,9 @@ from tempfile import mkdtemp
 from unittest import mock
 from urllib.request import urlretrieve
 
+import importlib_resources
 import numpy as np
 import pandas as pd
-from pkg_resources import resource_filename
 
 from .. import pyplink
 
@@ -123,19 +125,19 @@ class TestPyPlink(unittest.TestCase):
         # Creating a temporary directory
         cls.tmp_dir = mkdtemp(prefix="pyplink_test_")
 
+        file_manager = ExitStack()
+        atexit.register(file_manager.close)
+
         # Getting the BED/BIM/FAM files
-        cls.bed = resource_filename(
-            __name__,
-            os.path.join("data", "test_data.bed"),
-        )
-        cls.bim = resource_filename(
-            __name__,
-            os.path.join("data", "test_data.bim"),
-        )
-        cls.fam = resource_filename(
-            __name__,
-            os.path.join("data", "test_data.fam"),
-        )
+        cls.bed = file_manager.enter_context(importlib_resources.as_file(
+            importlib_resources.files(__name__) / "data" / "test_data.bed"
+        )).as_posix()
+        cls.bim = file_manager.enter_context(importlib_resources.as_file(
+            importlib_resources.files(__name__) / "data" / "test_data.bim"
+        )).as_posix()
+        cls.fam = file_manager.enter_context(importlib_resources.as_file(
+            importlib_resources.files(__name__) / "data" / "test_data.fam"
+        )).as_posix()
 
         # Getting the prefix of the files
         cls.prefix = os.path.splitext(cls.bed)[0]

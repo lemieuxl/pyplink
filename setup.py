@@ -9,17 +9,17 @@
 
 
 import os
-import sys
 from setuptools import setup
 
 
 MAJOR = 1
 MINOR = 3
-MICRO = 7
-VERSION = "{}.{}.{}".format(MAJOR, MINOR, MICRO)
+MICRO = 8
+VERSION = f"{MAJOR}.{MINOR}.{MICRO}b1"
 
 
 def write_version_file(fn=None):
+    """Write the version file."""
     if fn is None:
         fn = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
@@ -31,30 +31,16 @@ def write_version_file(fn=None):
         'pyplink_version = "{version}"\n'
     )
 
-    a = open(fn, "w")
-    try:
-        a.write(content.format(version=VERSION))
-    finally:
-        a.close()
-
-
-def get_requirements():
-    # Initial requirements
-    requirements = ["numpy >= 1.8.2", "pandas >= 0.17.1"]
-
-    # Checking if python 2 (requires mock)
-    if sys.version_info[0] == 2:
-        requirements.append(["mock >= 2.0.0"])
-
-    return requirements
+    with open(fn, "w") as f:
+        f.write(content.format(version=VERSION))
 
 
 def setup_package():
+    """Setup the package."""
     # Saving the version into a file
     write_version_file()
 
     setup(
-        zip_safe=False,
         name="pyplink",
         version=VERSION,
         description="Python module to read binary Plink files.",
@@ -65,7 +51,11 @@ def setup_package():
         packages=["pyplink", "pyplink.tests"],
         package_data={"pyplink.tests": ["data/*"], },
         test_suite="pyplink.tests.test_suite",
-        install_requires=get_requirements(),
+        install_requires=[
+            "numpy >= 1.8.2",
+            "pandas >= 0.17.1",
+            "importlib_resources >= 5.12.0",
+        ],
         classifiers=["Operating System :: POSIX :: Linux",
                      "Operating System :: MacOS :: MacOS X",
                      "Operating System :: Microsoft",
@@ -81,8 +71,6 @@ def setup_package():
                      "Topic :: Scientific/Engineering :: Bio-Informatics"],
         keywords="bioinformatics format Plink binary",
     )
-
-    return
 
 
 if __name__ == "__main__":
