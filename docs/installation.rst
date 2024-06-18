@@ -12,7 +12,7 @@ You can install :py:mod:`pyplink` using either ``pip`` or ``conda``.
 
 .. code-block:: bash
 
-   # Using conda (required Bioconda)
+   # Using conda (requires Bioconda)
    conda install pyplink
 
 
