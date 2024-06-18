@@ -26,18 +26,11 @@ Using `pip`:
 pip install pyplink
 ```
 
-Using `conda`:
+Using `conda` (make sure [Bioconda](https://bioconda.github.io/) is configured;
+thanks to @nebfield for the recipe):
 
 ```bash
-conda install pyplink -c http://statgen.org/wp-content/uploads/Softwares/pyplink
-```
-
-It is possible to add the channel to conda's configuration, so that the
-`-c http://statgen.org/...` can be omitted to update or install the package.
-To add the channel, perform the following command:
-
-```bash
-conda config --add channels http://statgen.org/wp-content/uploads/Softwares/pyplink
+conda install pyplink
 ```
 
 ### Updating
@@ -51,11 +44,8 @@ pip install -U pyplink
 To update the module using `conda`:
 
 ```bash
-# If the channel has been configured (see above)
+# Make sure bioconda is configured
 conda update pyplink
-
-# Otherwise
-conda update pyplink -c http://statgen.org/wp-content/uploads/Softwares/pyplink
 ```
 
 ## Testing
