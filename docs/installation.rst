@@ -12,8 +12,7 @@ You can install :py:mod:`pyplink` using either ``pip`` or ``conda``.
 
 .. code-block:: bash
 
-   # Using conda
-   conda config --add channels http://statgen.org/wp-content/uploads/Softwares/pyplink
+   # Using conda (required Bioconda)
    conda install pyplink
 
 
