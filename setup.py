@@ -15,7 +15,7 @@ from setuptools import setup
 MAJOR = 1
 MINOR = 3
 MICRO = 8
-VERSION = f"{MAJOR}.{MINOR}.{MICRO}b1"
+VERSION = f"{MAJOR}.{MINOR}.{MICRO}"
 
 
 def write_version_file(fn=None):
