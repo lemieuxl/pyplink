@@ -232,12 +232,10 @@ class PyPlink(object):
         bim["i"] = bim.index
 
         # Checking for duplicated markers
-        try:
-            bim = bim.set_index("snp")
-            assert bim.index.is_unique
-            self._has_duplicated = False
+        bim = bim.set_index("snp")
+        if not bim.index.is_unique:
+            bim = bim.reset_index()
 
-        except ValueError:
             # Setting this flag to true
             self._has_duplicated = True
 
@@ -269,9 +267,12 @@ class PyPlink(object):
                 # Updating the dictionary containing the duplicated markers
                 self._dup_markers[marker].append(new_name)
 
-            # Resetting the index
-            bim = bim.set_index("snp")
-            assert bim.index.is_unique
+            bim = bim.set_index("snp", verify_integrity=True)
+
+        else:
+            self._has_duplicated = False
+
+        assert bim.index.is_unique
 
         # Encoding the allele
         #   - The original 0 is the actual 2 (a1/a1)
