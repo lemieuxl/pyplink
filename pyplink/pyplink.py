@@ -224,9 +224,12 @@ class PyPlink(object):
     def _read_bim(self):
         """Reads the BIM file."""
         # Reading the BIM file and setting the values
-        bim = pd.read_csv(self.bim_filename, sep=r"\s+",
-                          names=["chrom", "snp", "cm", "pos", "a1", "a2"],
-                          dtype=dict(snp=str, a1=str, a2=str))
+        bim = pd.read_csv(
+            self.bim_filename,
+            sep=r"\s+",
+            names=["chrom", "snp", "cm", "pos", "a1", "a2"],
+            dtype={"snp": str, "a1": str, "a2": str},
+        )
 
         # Saving the index as integer
         bim["i"] = bim.index
@@ -329,10 +332,12 @@ class PyPlink(object):
     def _read_fam(self):
         """Reads the FAM file."""
         # Reading the FAM file and setting the values
-        fam = pd.read_csv(self.fam_filename, sep=r"\s+",
-                          names=["fid", "iid", "father", "mother", "gender",
-                                 "status"],
-                          dtype=dict(fid=str, iid=str, father=str, mother=str))
+        fam = pd.read_csv(
+            self.fam_filename,
+            sep=r"\s+",
+            names=["fid", "iid", "father", "mother", "gender", "status"],
+            dtype={"fid": str, "iid": str, "father": str, "mother": str},
+        )
 
         # Saving the data in the object
         self._fam = fam
